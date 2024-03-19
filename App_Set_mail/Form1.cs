@@ -453,18 +453,35 @@ namespace App_Set_mail
                             PO.CardCode = OrdenH_forSAP.CardCode;
                             PO.CardName = OrdenH_forSAP.CardName;
                             PO.Address = OrdenH_forSAP.Address;
-                            PO.ContactPersonCode = OrdenH_forSAP.ContactCode;
+                            //PO.ContactPersonCode = OrdenH_forSAP.ContactCode;
 
 
 
                             PO.NumAtCard = OrdenH_forSAP.NumAtCard;
+
                             PO.UserFields.Fields.Item("U_TipoOrden").Value = OrdenH_forSAP.TipoOrden.ToString();
                             //PO.UserFields.Fields.Item("U_AquaExoneracion").Value = OrdenH_forSAP.AquaExoneracion;
                             //PO.UserFields.Fields.Item("U_FechaExoneracion").Value = OrdenH_forSAP.FechaExoneracion;
                             PO.UserFields.Fields.Item("U_incoterm").Value = OrdenH_forSAP.U_incoterm;
-                            
-                            PO.Comments = OrdenH_forSAP.Comments;
+
+                            if (string.IsNullOrEmpty(OrdenH_forSAP.Comments))
+                            {
+                                PO.Comments = "N/D";
+                            }
+                            else
+                            {
+                                if(OrdenH_forSAP.Comments.Length > 253) 
+                                {
+                                    PO.Comments = OrdenH_forSAP.Comments.Substring(0,253);
+                                }
+                                else
+                                {
+                                    PO.Comments = OrdenH_forSAP.Comments;
+                                }
+                            }
+
                             PO.DocTotal = Convert.ToDouble(OrdenH_forSAP.DocTotal);
+                            
                             string DocCurrency_ = OrdenH_forSAP.DocCur.Trim();
                             PO.DocCurrency = DocCurrency_;
                             //PO.RelatedEntry
@@ -487,13 +504,13 @@ namespace App_Set_mail
 
                                 PO.Lines.Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("Quantity")));
                                 PO.Lines.Price = reader.IsDBNull(reader.GetOrdinal("Unite_Price")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("Unite_Price")));
-                                PO.Lines.DiscountPercent = reader.IsDBNull(reader.GetOrdinal("DiscPrcnt")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("DiscPrcnt")));
+                                PO.Lines.DiscountPercent = reader.IsDBNull(reader.GetOrdinal("DiscPrcnt")) ? Convert.ToDouble(0.00) : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("DiscPrcnt")));                                
                                 string currency_ = reader.IsDBNull(reader.GetOrdinal("Currency")) ? string.Empty : reader.GetString(reader.GetOrdinal("Currency")).Trim();
                                 PO.Lines.Currency = currency_;
                                 PO.Lines.TaxCode = reader.IsDBNull(reader.GetOrdinal("TaxCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("TaxCode"));
                                 PO.Lines.WarehouseCode = reader.IsDBNull(reader.GetOrdinal("WhsCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("WhsCode")).Trim();
                                 PO.Lines.TaxTotal = reader.IsDBNull(reader.GetOrdinal("isv")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("isv")));
-
+                                
                                 //if (!string.IsNullOrEmpty(OrdenH_forSAP.AquaExoneracion))
                                 //{
                                 //    PO.Lines.UserFields.Fields.Item("U_Rubro").Value = "N/D";
@@ -516,6 +533,12 @@ namespace App_Set_mail
 
                                     //-1, 0, 1470000113 = Purchase Request, 17 = Sales Order, 22 = Purchase Orders, 23 = Sales Quotation, 540000006 = Purchase Quotation
                                 }
+
+                                if(PO.Lines.Price<=0)
+                                {
+                                    throw new Exception("Se Intento crear una OC con una linea con precio <=0, id Orden H: " + OrdenH_forSAP.Id.ToString());
+                                }
+
                                 PO.Lines.Add();
                             }
                             reader.Close();
