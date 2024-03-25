@@ -504,10 +504,11 @@ namespace App_Set_mail
 
                                 PO.Lines.Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("Quantity")));
                                 PO.Lines.Price = reader.IsDBNull(reader.GetOrdinal("Unite_Price")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("Unite_Price")));
-                                PO.Lines.DiscountPercent = reader.IsDBNull(reader.GetOrdinal("DiscPrcnt")) ? Convert.ToDouble(0.00) : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("DiscPrcnt")));                                
+                                PO.Lines.DiscountPercent = reader.IsDBNull(reader.GetOrdinal("DiscPrcnt")) ? Convert.ToDouble(0.00) : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("DiscPrcnt")));       
                                 string currency_ = reader.IsDBNull(reader.GetOrdinal("Currency")) ? string.Empty : reader.GetString(reader.GetOrdinal("Currency")).Trim();
                                 PO.Lines.Currency = currency_;
-                                PO.Lines.TaxCode = reader.IsDBNull(reader.GetOrdinal("TaxCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("TaxCode"));
+                                string TaxCode = reader.IsDBNull(reader.GetOrdinal("TaxCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("TaxCode"));
+                                PO.Lines.TaxCode = TaxCode.Trim();  
                                 PO.Lines.WarehouseCode = reader.IsDBNull(reader.GetOrdinal("WhsCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("WhsCode")).Trim();
                                 PO.Lines.TaxTotal = reader.IsDBNull(reader.GetOrdinal("isv")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("isv")));
                                 
@@ -519,20 +520,19 @@ namespace App_Set_mail
 
                                 int IdBaseRef_NumSolicitud = reader.IsDBNull(reader.GetOrdinal("base_ref")) ? 0 : Convert.ToInt32(reader.GetInt32(reader.GetOrdinal("base_ref")));
 
-                                //if (OrdenH_forSAP.DocNumSolicitud > 0)
-                                if(IdBaseRef_NumSolicitud>0)
-                                {
-                                    //PO.Lines.BaseEntry = OrdenH_forSAP.DocNumSolicitud;
-                                    //PO.Lines.BaseType = 
-                                    PO.Lines.BaseEntry = IdBaseRef_NumSolicitud;
-                                    PO.Lines.BaseType = 1470000113;
-                                    int LineaNumSolicitud = reader.IsDBNull(reader.GetOrdinal("num_linea_solicitud_d")) ? 0 : Convert.ToInt32(reader.GetInt32(reader.GetOrdinal("num_linea_solicitud_d")));
-                                    PO.Lines.BaseLine = LineaNumSolicitud;
-                                    //PO.Lines.VatGroup = "IPPN0";
-                                    //PO.Lines.AccountCode = "6020-1500";
+                                //if(IdBaseRef_NumSolicitud>0)
+                                //{
+                                //    //PO.Lines.BaseEntry = OrdenH_forSAP.DocNumSolicitud;
+                                //    //PO.Lines.BaseType = 
+                                //    PO.Lines.BaseEntry = IdBaseRef_NumSolicitud;
+                                //    PO.Lines.BaseType = 1470000113;
+                                //    int LineaNumSolicitud = reader.IsDBNull(reader.GetOrdinal("num_linea_solicitud_d")) ? 0 : Convert.ToInt32(reader.GetInt32(reader.GetOrdinal("num_linea_solicitud_d")));
+                                //    PO.Lines.BaseLine = LineaNumSolicitud;
+                                //    //PO.Lines.VatGroup = "IPPN0";
+                                //    //PO.Lines.AccountCode = "6020-1500";
 
-                                    //-1, 0, 1470000113 = Purchase Request, 17 = Sales Order, 22 = Purchase Orders, 23 = Sales Quotation, 540000006 = Purchase Quotation
-                                }
+                                //    //-1, 0, 1470000113 = Purchase Request, 17 = Sales Order, 22 = Purchase Orders, 23 = Sales Quotation, 540000006 = Purchase Quotation
+                                //}
 
                                 if(PO.Lines.Price<=0)
                                 {
