@@ -211,6 +211,8 @@ namespace App_Set_mail.Classes
                     command.CommandType = System.Data.CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@id_ordenH", pId);
 
+
+
                     connection.Open();
                     SqlDataReader reader = command.ExecuteReader();
                     Recuperado = false;
