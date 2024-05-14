@@ -278,8 +278,6 @@ namespace App_Set_mail
                             string docType = oCmp.GetNewObjectType();
                             int iDocEntryHeaderSAP = dp.ValidateNumberInt32(DocEntry);
 
-                       
-
                             if (errNum == 0)//Guardo con exito
                             {
                                 //Update Tarimas como subidas
@@ -559,7 +557,7 @@ namespace App_Set_mail
                                 // MessageBox.Show(ocompany.GetLastErrorDescription()); //@scope_identity
                                 oCmp.GetLastError(out errNum, out errMsg);
                                 //Guardar Mensaje en el grid del error
-                                SetErrorGrid("timerSubirOrdenesCompra: " + errMsg, "Error");
+                                SetErrorGrid("timerSubirOrdenesCompra: " + OrdenH_forSAP.Id +" - "+  errMsg + " ", "Error");
                             }
 
                             try
