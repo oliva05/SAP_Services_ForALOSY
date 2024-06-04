@@ -395,6 +395,7 @@ namespace App_Set_mail
 
         private void timerSubirOrdenesCompra_Tick(object sender, EventArgs e)
         {
+            string IdOC_string = null;
             try
             {
                 DataOperations dp = new DataOperations();
@@ -470,9 +471,9 @@ namespace App_Set_mail
                             }
                             else
                             {
-                                if(OrdenH_forSAP.Comments.Length > 253) 
+                                if (OrdenH_forSAP.Comments.Length > 253)
                                 {
-                                    PO.Comments = OrdenH_forSAP.Comments.Substring(0,253);
+                                    PO.Comments = OrdenH_forSAP.Comments.Substring(0, 253);
                                 }
                                 else
                                 {
@@ -481,7 +482,7 @@ namespace App_Set_mail
                             }
 
                             PO.DocTotal = Convert.ToDouble(OrdenH_forSAP.DocTotal);
-                            
+
                             string DocCurrency_ = OrdenH_forSAP.DocCur.Trim();
                             PO.DocCurrency = DocCurrency_;
                             //PO.RelatedEntry
@@ -489,7 +490,7 @@ namespace App_Set_mail
 
                             //PO.Series = 16;// int.Parse("16N");
                             //PO.DocNum = 211000002;
-                            
+
 
                             SqlCommand cmdLines = new SqlCommand("sp_get_orden_compra_d_for_sap", con);
                             cmdLines.CommandType = CommandType.StoredProcedure;
@@ -504,14 +505,14 @@ namespace App_Set_mail
 
                                 PO.Lines.Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("Quantity")));
                                 PO.Lines.Price = reader.IsDBNull(reader.GetOrdinal("Unite_Price")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("Unite_Price")));
-                                PO.Lines.DiscountPercent = reader.IsDBNull(reader.GetOrdinal("DiscPrcnt")) ? Convert.ToDouble(0.00) : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("DiscPrcnt")));       
+                                PO.Lines.DiscountPercent = reader.IsDBNull(reader.GetOrdinal("DiscPrcnt")) ? Convert.ToDouble(0.00) : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("DiscPrcnt")));
                                 string currency_ = reader.IsDBNull(reader.GetOrdinal("Currency")) ? string.Empty : reader.GetString(reader.GetOrdinal("Currency")).Trim();
                                 PO.Lines.Currency = currency_;
                                 string TaxCode = reader.IsDBNull(reader.GetOrdinal("TaxCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("TaxCode"));
-                                PO.Lines.TaxCode = TaxCode.Trim();  
+                                PO.Lines.TaxCode = TaxCode.Trim();
                                 PO.Lines.WarehouseCode = reader.IsDBNull(reader.GetOrdinal("WhsCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("WhsCode")).Trim();
                                 PO.Lines.TaxTotal = reader.IsDBNull(reader.GetOrdinal("isv")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("isv")));
-                                
+
                                 //if (!string.IsNullOrEmpty(OrdenH_forSAP.AquaExoneracion))
                                 //{
                                 //    PO.Lines.UserFields.Fields.Item("U_Rubro").Value = "N/D";
@@ -534,7 +535,7 @@ namespace App_Set_mail
                                 //    //-1, 0, 1470000113 = Purchase Request, 17 = Sales Order, 22 = Purchase Orders, 23 = Sales Quotation, 540000006 = Purchase Quotation
                                 //}
 
-                                if(PO.Lines.Price<=0)
+                                if (PO.Lines.Price <= 0)
                                 {
                                     throw new Exception("Se Intento crear una OC con una linea con precio <=0, id Orden H: " + OrdenH_forSAP.Id.ToString());
                                 }
@@ -544,7 +545,7 @@ namespace App_Set_mail
                             reader.Close();
 
                             int res = PO.Add();
-                           
+
                             string errMsg = "";
                             int errNum = 0;
                             if (res == 0)
@@ -552,14 +553,15 @@ namespace App_Set_mail
                                 string DocEntry = oCmp.GetNewObjectKey();
                                 OrdenH_forSAP.UpdateStatusOrderH(OrdenH_forSAP.Id, dp.ValidateNumberInt32(DocEntry));
                                 //MessageBox.Show("Add Purchase Order successfull");
-                                SetErrorGrid("Creacion de OC Exitosa! DocEntry: " + DocEntry + " ", "Notificación");
+                                SetErrorGrid("Creacion de OC Exitosa! DocEntry: " + DocEntry + " " + "Id OC: " + IdOC_string, "Notificación");
                             }
                             else
                             {
+                                IdOC_string = OrdenH_forSAP.Id.ToString();
                                 // MessageBox.Show(ocompany.GetLastErrorDescription()); //@scope_identity
                                 oCmp.GetLastError(out errNum, out errMsg);
                                 //Guardar Mensaje en el grid del error
-                                SetErrorGrid("timerSubirOrdenesCompra: " + errMsg, "Error");
+                                SetErrorGrid("timerSubirOrdenesCompra: " + errMsg + " IdOC: " + IdOC_string, "Error");
                             }
 
                             try
