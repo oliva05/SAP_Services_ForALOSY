@@ -482,7 +482,7 @@ namespace App_Set_mail
                             }
 
                             PO.DocTotal = Convert.ToDouble(OrdenH_forSAP.DocTotal);
-
+                            IdOC_string = OrdenH_forSAP.Id.ToString();
                             string DocCurrency_ = OrdenH_forSAP.DocCur.Trim();
                             PO.DocCurrency = DocCurrency_;
                             //PO.RelatedEntry
@@ -512,12 +512,6 @@ namespace App_Set_mail
                                 PO.Lines.TaxCode = TaxCode.Trim();
                                 PO.Lines.WarehouseCode = reader.IsDBNull(reader.GetOrdinal("WhsCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("WhsCode")).Trim();
                                 PO.Lines.TaxTotal = reader.IsDBNull(reader.GetOrdinal("isv")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("isv")));
-
-                                //if (!string.IsNullOrEmpty(OrdenH_forSAP.AquaExoneracion))
-                                //{
-                                //    PO.Lines.UserFields.Fields.Item("U_Rubro").Value = "N/D";
-                                //    PO.Lines.UserFields.Fields.Item("U_AQUA_CAP").Value = "N/D";
-                                //}
 
                                 int IdBaseRef_NumSolicitud = reader.IsDBNull(reader.GetOrdinal("base_ref")) ? 0 : Convert.ToInt32(reader.GetInt32(reader.GetOrdinal("base_ref")));
 
