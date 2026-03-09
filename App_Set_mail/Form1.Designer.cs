@@ -41,6 +41,7 @@
             this.coltipo = new DevExpress.XtraGrid.Columns.GridColumn();
             this.timerLotesPT_SAP = new System.Windows.Forms.Timer(this.components);
             this.timerSubirOrdenesCompra = new System.Windows.Forms.Timer(this.components);
+            this.timerSubirRequisasSAP = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.gridControl1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dsReport1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridView1)).BeginInit();
@@ -161,6 +162,11 @@
             this.timerSubirOrdenesCompra.Interval = 300000;
             this.timerSubirOrdenesCompra.Tick += new System.EventHandler(this.timerSubirOrdenesCompra_Tick);
             // 
+            // timerSubirRequisasSAP
+            // 
+            this.timerSubirRequisasSAP.Interval = 120000;
+            this.timerSubirRequisasSAP.Tick += new System.EventHandler(this.timerSubirRequisasSAP_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -193,6 +199,7 @@
         private DevExpress.XtraGrid.Columns.GridColumn coltipo;
         private System.Windows.Forms.Timer timerLotesPT_SAP;
         private System.Windows.Forms.Timer timerSubirOrdenesCompra;
+        private System.Windows.Forms.Timer timerSubirRequisasSAP;
     }
 }
 

@@ -12,6 +12,10 @@ using App_Set_mail.Classes.Model;
 using System.Net;
 using System.Threading;
 using System.Security.Cryptography;
+using System.Runtime.InteropServices.WindowsRuntime;
+using SAPbobsCOM;
+using DevExpress.Internal;
+using System.Runtime.InteropServices;
 
 namespace App_Set_mail
 {
@@ -34,7 +38,7 @@ namespace App_Set_mail
         public enum StatusConexionSAP
         {
             Desconectado = 0,
-            Conectado = 1 
+            Conectado = 1
         }
 
         StatusConexionSAP EstadoConexionActual;
@@ -50,7 +54,7 @@ namespace App_Set_mail
             EstadoConexionActual = StatusConexionSAP.Desconectado;
             PlayServices();
         }
-        
+
         private void simpleButton2_Click(object sender, EventArgs e)
         {
             Encendido = 0;
@@ -116,17 +120,19 @@ namespace App_Set_mail
         void PlayServices()
         {
             timerSubirOrdenesCompra.Enabled =
-            timerLotesPT_SAP.Enabled = true;
+            timerLotesPT_SAP.Enabled = 
+            timerSubirRequisasSAP.Enabled = true;
 
             timerLotesPT_SAP.Start();
             timerSubirOrdenesCompra.Start();
+            timerSubirRequisasSAP.Start();
             lblEstado.Text = "Encendido";
             Encendido = 1;
         }
 
-        
+
         EmailSendParams parametrosEmail = new EmailSendParams();
-      
+
         private class MailTicketAbierto {
             public int Id { get; set; }
             public int HorasTranscurridas { get; set; }
@@ -278,7 +284,7 @@ namespace App_Set_mail
                             string docType = oCmp.GetNewObjectType();
                             int iDocEntryHeaderSAP = dp.ValidateNumberInt32(DocEntry);
 
-                       
+
 
                             if (errNum == 0)//Guardo con exito
                             {
@@ -335,7 +341,7 @@ namespace App_Set_mail
 
         private void AddTarimaToLoteResumen(ItemTarima tarima)
         {
-            if(dsReport1.Lotes_to_SAP.Count == 0)
+            if (dsReport1.Lotes_to_SAP.Count == 0)
             {
                 //Insertar el row inicial
                 dsReport.Lotes_to_SAPRow row = dsReport1.Lotes_to_SAP.NewLotes_to_SAPRow();
@@ -574,7 +580,7 @@ namespace App_Set_mail
                         ListaOrdenesH.Clear();
                         con.Close();
                     }
-                    
+
                 }
                 else
                 {
@@ -588,6 +594,198 @@ namespace App_Set_mail
                 //CajaDialogo.Error(ec.Message);
                 SetErrorGrid("timerSubirOrdenesCompra: " + ex.Message, "");
             }
+        }
+
+        private void timerSubirRequisasSAP_Tick(object sender, EventArgs e)
+        {
+            ProcesarRequisasPendientes();
+        }
+
+        private void ProcesarRequisasPendientes()
+        {
+            try
+            {
+                var requisiciones = ObtenerRequisasListasParaProcesar();
+
+                if (requisiciones.Count == 0)
+                    return;
+
+                using (SqlConnection conn = new SqlConnection(dp.ConnectionStringALOSY))
+                { 
+                    conn.Open();
+                    SAPbobsCOM.Company oCmp = dp.CompanyMake("interfaz.alosy", "Aq4x_3Fj2#");
+                    foreach (var idRequisa in requisiciones)
+                    {
+                        try
+                        {
+                            List<InfoRequisaDetalle> listMateriasPrimas = new List<InfoRequisaDetalle>();
+
+                            dsReport1.requisa_to_SAP.Clear();
+                            string RequisaNumero = string.Empty;
+                            string LotePT = string.Empty;
+
+                            using (SqlCommand cmd = new SqlCommand("spgGetInfoRequisaById", conn))
+                            {
+                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
+                                SqlDataReader dr = cmd.ExecuteReader();
+                                if (dr.Read())
+                                {
+                                    RequisaNumero = dr.GetString(0);
+                                    LotePT = dr.GetString(1);
+                                }
+                                dr.Close();
+                            }
+
+                            using (SqlCommand cmd = new SqlCommand("spgGetInfoRequisaDetalleById", conn))
+                            {
+                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
+                                SqlDataReader dr = cmd.ExecuteReader();
+                                while (dr.Read())
+                                {
+                                    InfoRequisaDetalle detalleRequisa = new InfoRequisaDetalle();
+                                    detalleRequisa.idMp = Convert.ToInt32(dr.GetInt32(0));
+                                    detalleRequisa.itemCode = dr.GetString(1);
+                                    detalleRequisa.itemName = dr.GetString(2);
+                                    detalleRequisa.pesoKg = Convert.ToDecimal(dr.GetDecimal(3));
+                                    detalleRequisa.bodega = dr.GetString(4);
+
+                                    listMateriasPrimas.Add(detalleRequisa);
+
+                                    AddDetalleRequisaById(detalleRequisa);
+                                }
+                                dr.Close();
+                            }
+
+
+                            //Header SAP
+                            SAPbobsCOM.Documents EntryH = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryGenExit);
+                            EstadoConexionActual = StatusConexionSAP.Conectado;
+                            DateTime HoyDate = dp.Now();
+                            EntryH.DocDate = HoyDate;
+                            EntryH.TaxDate = HoyDate;
+                            EntryH.Reference2 = "Requisa: " + RequisaNumero;
+                            EntryH.Comments = "Generado desde Interfaz automática ALOSY basado en Requisa para Lote PT: "+LotePT;
+
+                            int i = 0;
+                            foreach (var row in dsReport1.requisa_to_SAP)
+                            {
+                                //Detalles de Lineas
+                                if (i > 0)
+                                    EntryH.Lines.Add();
+                                EntryH.Lines.AccountCode = "_SYS00000000210";//Costo de venta de materia prima - 51000001
+                                EntryH.Lines.WarehouseCode = row.bodega;
+                                EntryH.Lines.ItemCode = row.itemcode;
+                                EntryH.Lines.Quantity = Convert.ToDouble(row.peso);
+                                i++;
+                            }
+
+                            string errMesg = "";
+                            int errNum = 0;
+
+                            errNum = EntryH.Add();//Guardar Header
+                            
+
+
+                            if (errNum == 0)//Guardo con Exito!
+                            {
+                                //Vamos a Ligar la Salida de Mercancia a la Requisa
+                                string DocEntry = oCmp.GetNewObjectKey();//Numero header sap
+                                string docType = oCmp.GetNewObjectType();
+                                int iDocEntryHeaderSAP = dp.ValidateNumberInt32(DocEntry);
+                                ConfirmarRequisa(idRequisa, DocEntry, conn);
+
+                                SetErrorGrid("Salida de Mercancias Exitosa! DocEntry: " + iDocEntryHeaderSAP.ToString() + " ", "Notificación");
+                                Marshal.ReleaseComObject(EntryH);
+                                EntryH = null;
+                            }
+                            else
+                            {
+                                oCmp.GetLastError(out errNum, out errMesg);
+                                SetErrorGrid("timerSubirRequisasSAP: " + errMesg, "Error");
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            EstadoConexionActual = StatusConexionSAP.Desconectado;
+                            //CajaDialogo.Error(ec.Message);
+                            SetErrorGrid("timerSubirRequisasSAP: " + ex.Message, "");
+                        }
+                    }//FIn de Ciclo
+
+                    try
+                    {
+                        EstadoConexionActual = StatusConexionSAP.Desconectado;
+                        oCmp.Disconnect();
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                CajaDialogo.Error(ex.Message);
+            }
+        }
+
+        private void ConfirmarRequisa(int idRequisa, string docEntry, SqlConnection connection)
+        {
+            using (SqlCommand cmd = new SqlCommand("sp_set_confirmar_requisa", connection))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@id", idRequisa);
+                cmd.Parameters.AddWithValue("@docEntry", docEntry);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public class InfoRequisaDetalle
+        {
+            public int idMp;
+            public string itemCode;
+            public string itemName;
+            public decimal pesoKg;
+            public string bodega;
+        }
+
+        private void AddDetalleRequisaById(InfoRequisaDetalle detalle)
+        { 
+            
+            dsReport.requisa_to_SAPRow row = dsReport1.requisa_to_SAP.Newrequisa_to_SAPRow();
+            row.id_mp = detalle.idMp;
+            row.itemcode = detalle.itemCode;
+            row.itemname = detalle.itemName;    
+            row.peso = detalle.pesoKg;
+            row.bodega = detalle.bodega;
+            dsReport1.requisa_to_SAP.Addrequisa_to_SAPRow(row);
+            dsReport1.AcceptChanges();
+            
+        }
+
+        private List<int> ObtenerRequisasListasParaProcesar()
+        {
+            List<int> list = new List<int>();
+
+            using (SqlConnection conn = new SqlConnection(dp.ConnectionStringALOSY))
+            {
+                conn.Open();
+
+                string query = @"sp_service_alosy_sap_get_requisas";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(dr.GetInt32(0));
+                }
+                dr.Close();
+            }
+
+            return list;
         }
     }
 }
