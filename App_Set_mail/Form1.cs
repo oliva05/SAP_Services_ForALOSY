@@ -106,8 +106,18 @@ namespace App_Set_mail
 
         private void cmd_stop_Click(object sender, EventArgs e)
         {
-            timerLotesPT_SAP.Enabled = false;
+            StopServices();
+        }
+
+        void StopServices()
+        {
+            timerLotesPT_SAP.Enabled = 
+            timerSubirOrdenesCompra.Enabled = 
+            timerSubirRequisasSAP.Enabled = false;
+
             timerLotesPT_SAP.Stop();
+            timerSubirOrdenesCompra.Stop();
+            timerSubirRequisasSAP.Stop();
             lblEstado.Text = "Apagado";
             Encendido = 0;
         }
@@ -126,6 +136,7 @@ namespace App_Set_mail
             timerLotesPT_SAP.Start();
             timerSubirOrdenesCompra.Start();
             timerSubirRequisasSAP.Start();
+
             lblEstado.Text = "Encendido";
             Encendido = 1;
         }
