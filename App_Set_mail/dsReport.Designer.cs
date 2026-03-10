@@ -2711,6 +2711,8 @@ namespace App_Set_mail {
             
             private global::System.Data.DataColumn columnbodega;
             
+            private global::System.Data.DataColumn columnisReproceso;
+            
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public requisa_to_SAPDataTable() {
@@ -2786,6 +2788,14 @@ namespace App_Set_mail {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn isReprocesoColumn {
+                get {
+                    return this.columnisReproceso;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             [global::System.ComponentModel.Browsable(false)]
             public int Count {
                 get {
@@ -2821,14 +2831,15 @@ namespace App_Set_mail {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
-            public requisa_to_SAPRow Addrequisa_to_SAPRow(int id_mp, string itemcode, string itemname, decimal peso, string bodega) {
+            public requisa_to_SAPRow Addrequisa_to_SAPRow(int id_mp, string itemcode, string itemname, decimal peso, string bodega, string isReproceso) {
                 requisa_to_SAPRow rowrequisa_to_SAPRow = ((requisa_to_SAPRow)(this.NewRow()));
                 object[] columnValuesArray = new object[] {
                         id_mp,
                         itemcode,
                         itemname,
                         peso,
-                        bodega};
+                        bodega,
+                        isReproceso};
                 rowrequisa_to_SAPRow.ItemArray = columnValuesArray;
                 this.Rows.Add(rowrequisa_to_SAPRow);
                 return rowrequisa_to_SAPRow;
@@ -2856,6 +2867,7 @@ namespace App_Set_mail {
                 this.columnitemname = base.Columns["itemname"];
                 this.columnpeso = base.Columns["peso"];
                 this.columnbodega = base.Columns["bodega"];
+                this.columnisReproceso = base.Columns["isReproceso"];
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -2871,6 +2883,8 @@ namespace App_Set_mail {
                 base.Columns.Add(this.columnpeso);
                 this.columnbodega = new global::System.Data.DataColumn("bodega", typeof(string), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnbodega);
+                this.columnisReproceso = new global::System.Data.DataColumn("isReproceso", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnisReproceso);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -4290,6 +4304,22 @@ namespace App_Set_mail {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string isReproceso {
+                get {
+                    try {
+                        return ((string)(this[this.tablerequisa_to_SAP.isReprocesoColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'isReproceso\' in table \'requisa_to_SAP\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tablerequisa_to_SAP.isReprocesoColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public bool Isid_mpNull() {
                 return this.IsNull(this.tablerequisa_to_SAP.id_mpColumn);
             }
@@ -4346,6 +4376,18 @@ namespace App_Set_mail {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public void SetbodegaNull() {
                 this[this.tablerequisa_to_SAP.bodegaColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsisReprocesoNull() {
+                return this.IsNull(this.tablerequisa_to_SAP.isReprocesoColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetisReprocesoNull() {
+                this[this.tablerequisa_to_SAP.isReprocesoColumn] = global::System.Convert.DBNull;
             }
         }
         

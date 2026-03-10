@@ -16,6 +16,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using SAPbobsCOM;
 using DevExpress.Internal;
 using System.Runtime.InteropServices;
+using DevExpress.XtraGrid.Registrator;
 
 namespace App_Set_mail
 {
@@ -634,6 +635,7 @@ namespace App_Set_mail
                             dsReport1.requisa_to_SAP.Clear();
                             string RequisaNumero = string.Empty;
                             string LotePT = string.Empty;
+                            DateTime FechaPosteo = DateTime.MinValue;
 
                             using (SqlCommand cmd = new SqlCommand("spgGetInfoRequisaById", conn))
                             {
@@ -644,6 +646,7 @@ namespace App_Set_mail
                                 {
                                     RequisaNumero = dr.GetString(0);
                                     LotePT = dr.GetString(1);
+                                    FechaPosteo = dr.GetDateTime(2);
                                 }
                                 dr.Close();
                             }
@@ -661,7 +664,7 @@ namespace App_Set_mail
                                     detalleRequisa.itemName = dr.GetString(2);
                                     detalleRequisa.pesoKg = Convert.ToDecimal(dr.GetDecimal(3));
                                     detalleRequisa.bodega = dr.GetString(4);
-
+                                    detalleRequisa.isReproceso = dr.GetString(5);
                                     listMateriasPrimas.Add(detalleRequisa);
 
                                     AddDetalleRequisaById(detalleRequisa);
@@ -674,7 +677,7 @@ namespace App_Set_mail
                             SAPbobsCOM.Documents EntryH = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryGenExit);
                             EstadoConexionActual = StatusConexionSAP.Conectado;
                             DateTime HoyDate = dp.Now();
-                            EntryH.DocDate = HoyDate;
+                            EntryH.DocDate = FechaPosteo;
                             EntryH.TaxDate = HoyDate;
                             EntryH.Reference2 = "Requisa: " + RequisaNumero;
                             EntryH.Comments = "Generado desde Interfaz automática ALOSY basado en Requisa para Lote PT: "+LotePT;
@@ -682,13 +685,27 @@ namespace App_Set_mail
                             int i = 0;
                             foreach (var row in dsReport1.requisa_to_SAP)
                             {
-                                //Detalles de Lineas
                                 if (i > 0)
                                     EntryH.Lines.Add();
                                 EntryH.Lines.AccountCode = "_SYS00000000210";//Costo de venta de materia prima - 51000001
                                 EntryH.Lines.WarehouseCode = row.bodega;
                                 EntryH.Lines.ItemCode = row.itemcode;
                                 EntryH.Lines.Quantity = Convert.ToDouble(row.peso);
+
+                                if (row.isReproceso == "Y")
+                                {
+                                    //Detalles de Lineas Reproceso
+                                    List<InfoRequisaDetalleReproceso> arrayReproceso = new List<InfoRequisaDetalleReproceso>();
+
+                                    arrayReproceso = GetLotesReprocesoEntregado(idRequisa, row.itemcode);
+                                    
+                                    foreach (var item in arrayReproceso)
+                                    {
+                                        EntryH.Lines.BatchNumbers.BatchNumber = item.lote;
+                                        EntryH.Lines.BatchNumbers.Quantity = Convert.ToDouble(item.pesoxlote);
+                                        EntryH.Lines.BatchNumbers.Add();
+                                    }
+                                }
                                 i++;
                             }
 
@@ -742,6 +759,40 @@ namespace App_Set_mail
             }
         }
 
+        private List<InfoRequisaDetalleReproceso> GetLotesReprocesoEntregado(int idRequisa, string itemcode)
+        {
+            List<InfoRequisaDetalleReproceso> lista = new List<InfoRequisaDetalleReproceso>();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(dp.ConnectionStringALOSY))
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = new SqlCommand("[sp_service_get_detalle_lote_mp]", conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@idRequisa", idRequisa);
+                        cmd.Parameters.AddWithValue("@itemcode", itemcode);
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            while (dr.Read()) 
+                            {
+                                InfoRequisaDetalleReproceso item = new InfoRequisaDetalleReproceso();
+                                item.lote = dr.GetString(0);
+                                item.pesoxlote = Convert.ToDecimal(dr.GetDecimal(1));
+                                lista.Add(item);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                CajaDialogo.Error(ex.Message);
+            }
+
+            return lista;
+        }
+
         private void ConfirmarRequisa(int idRequisa, string docEntry, SqlConnection connection)
         {
             using (SqlCommand cmd = new SqlCommand("sp_set_confirmar_requisa", connection))
@@ -760,6 +811,13 @@ namespace App_Set_mail
             public string itemName;
             public decimal pesoKg;
             public string bodega;
+            public string isReproceso;
+        }
+        
+        public class InfoRequisaDetalleReproceso
+        {
+            public decimal pesoxlote;
+            public string lote;
         }
 
         private void AddDetalleRequisaById(InfoRequisaDetalle detalle)
@@ -771,6 +829,7 @@ namespace App_Set_mail
             row.itemname = detalle.itemName;    
             row.peso = detalle.pesoKg;
             row.bodega = detalle.bodega;
+            row.isReproceso = detalle.isReproceso;
             dsReport1.requisa_to_SAP.Addrequisa_to_SAPRow(row);
             dsReport1.AcceptChanges();
             
@@ -797,6 +856,11 @@ namespace App_Set_mail
             }
 
             return list;
+        }
+
+        private void timerGeneral_Tick(object sender, EventArgs e)
+        {
+
         }
     }
 }

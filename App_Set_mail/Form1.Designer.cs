@@ -42,6 +42,7 @@
             this.timerLotesPT_SAP = new System.Windows.Forms.Timer(this.components);
             this.timerSubirOrdenesCompra = new System.Windows.Forms.Timer(this.components);
             this.timerSubirRequisasSAP = new System.Windows.Forms.Timer(this.components);
+            this.timerGeneral = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.gridControl1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dsReport1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gridView1)).BeginInit();
@@ -52,7 +53,7 @@
             this.lblEstado.Appearance.Font = new System.Drawing.Font("Segoe UI", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblEstado.Appearance.Options.UseFont = true;
             this.lblEstado.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            this.lblEstado.Location = new System.Drawing.Point(155, 104);
+            this.lblEstado.Location = new System.Drawing.Point(137, 131);
             this.lblEstado.Name = "lblEstado";
             this.lblEstado.Size = new System.Drawing.Size(220, 45);
             this.lblEstado.TabIndex = 4;
@@ -62,7 +63,7 @@
             this.labelControl2.Appearance.Font = new System.Drawing.Font("Segoe UI", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelControl2.Appearance.Options.UseFont = true;
             this.labelControl2.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            this.labelControl2.Location = new System.Drawing.Point(25, 104);
+            this.labelControl2.Location = new System.Drawing.Point(25, 131);
             this.labelControl2.Name = "labelControl2";
             this.labelControl2.Size = new System.Drawing.Size(124, 45);
             this.labelControl2.TabIndex = 5;
@@ -95,10 +96,10 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.gridControl1.DataMember = "exceptions";
             this.gridControl1.DataSource = this.dsReport1;
-            this.gridControl1.Location = new System.Drawing.Point(0, 155);
+            this.gridControl1.Location = new System.Drawing.Point(0, 182);
             this.gridControl1.MainView = this.gridView1;
             this.gridControl1.Name = "gridControl1";
-            this.gridControl1.Size = new System.Drawing.Size(619, 339);
+            this.gridControl1.Size = new System.Drawing.Size(682, 411);
             this.gridControl1.TabIndex = 8;
             this.gridControl1.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] {
             this.gridView1});
@@ -167,11 +168,16 @@
             this.timerSubirRequisasSAP.Interval = 120000;
             this.timerSubirRequisasSAP.Tick += new System.EventHandler(this.timerSubirRequisasSAP_Tick);
             // 
+            // timerGeneral
+            // 
+            this.timerGeneral.Interval = 120000;
+            this.timerGeneral.Tick += new System.EventHandler(this.timerGeneral_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(620, 494);
+            this.ClientSize = new System.Drawing.Size(683, 593);
             this.Controls.Add(this.gridControl1);
             this.Controls.Add(this.cmd_stop);
             this.Controls.Add(this.button1);
@@ -200,6 +206,7 @@
         private System.Windows.Forms.Timer timerLotesPT_SAP;
         private System.Windows.Forms.Timer timerSubirOrdenesCompra;
         private System.Windows.Forms.Timer timerSubirRequisasSAP;
+        private System.Windows.Forms.Timer timerGeneral;
     }
 }
 

@@ -13,7 +13,7 @@
     <Shape ID="DesignTable:ReportData" ZOrder="4" X="1003" Y="344" Height="238" Width="150" AdapterExpanded="true" DataTableExpanded="true" OldAdapterHeight="0" OldDataTableHeight="0" SplitterPosition="234" />
     <Shape ID="DesignTable:exceptions" ZOrder="3" X="524" Y="293" Height="86" Width="150" AdapterExpanded="true" DataTableExpanded="true" OldAdapterHeight="0" OldDataTableHeight="0" SplitterPosition="82" />
     <Shape ID="DesignTable:Lotes_to_SAP" ZOrder="2" X="262" Y="504" Height="162" Width="150" AdapterExpanded="true" DataTableExpanded="true" OldAdapterHeight="0" OldDataTableHeight="0" SplitterPosition="177" />
-    <Shape ID="DesignTable:requisa_to_SAP" ZOrder="1" X="934" Y="101" Height="124" Width="154" AdapterExpanded="true" DataTableExpanded="true" OldAdapterHeight="0" OldDataTableHeight="0" SplitterPosition="120" />
+    <Shape ID="DesignTable:requisa_to_SAP" ZOrder="1" X="934" Y="101" Height="143" Width="154" AdapterExpanded="true" DataTableExpanded="true" OldAdapterHeight="0" OldDataTableHeight="0" SplitterPosition="139" />
   </Shapes>
   <Connectors />
 </DiagramLayout>
