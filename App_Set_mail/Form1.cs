@@ -634,7 +634,7 @@ namespace App_Set_mail
 
                             dsReport1.requisa_to_SAP.Clear();
                             string RequisaNumero = string.Empty;
-                            string LotePT = string.Empty;
+                            int LotePT = 0;
                             DateTime FechaPosteo = DateTime.MinValue;
 
                             using (SqlCommand cmd = new SqlCommand("spgGetInfoRequisaById", conn))
@@ -645,7 +645,7 @@ namespace App_Set_mail
                                 if (dr.Read())
                                 {
                                     RequisaNumero = dr.GetString(0);
-                                    LotePT = dr.GetString(1);
+                                    LotePT = dr.GetInt32(1);
                                     FechaPosteo = dr.GetDateTime(2);
                                 }
                                 dr.Close();
@@ -680,7 +680,7 @@ namespace App_Set_mail
                             EntryH.DocDate = FechaPosteo;
                             EntryH.TaxDate = HoyDate;
                             
-                            EntryH.Comments = "Generado desde Interfaz automática ALOSY basado en Requisa: "+ RequisaNumero + " para Lote PT: "+LotePT;
+                            EntryH.Comments = "Generado desde Interfaz automática ALOSY basado en Requisa: "+ RequisaNumero + " para Lote PT: "+LotePT.ToString();
 
                             int i = 0;
                             foreach (var row in dsReport1.requisa_to_SAP)
