@@ -679,8 +679,8 @@ namespace App_Set_mail
                             DateTime HoyDate = dp.Now();
                             EntryH.DocDate = FechaPosteo;
                             EntryH.TaxDate = HoyDate;
-                            EntryH.Reference2 = "Requisa: " + RequisaNumero;
-                            EntryH.Comments = "Generado desde Interfaz automática ALOSY basado en Requisa para Lote PT: "+LotePT;
+                            
+                            EntryH.Comments = "Generado desde Interfaz automática ALOSY basado en Requisa: "+ RequisaNumero + " para Lote PT: "+LotePT;
 
                             int i = 0;
                             foreach (var row in dsReport1.requisa_to_SAP)
