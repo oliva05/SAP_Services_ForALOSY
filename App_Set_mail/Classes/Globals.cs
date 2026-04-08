@@ -117,10 +117,10 @@ namespace App_Set_mail
         public static string odoo5_DB_Pass = "aquaf33d19";
 
         //AMSv
-        //public static string AMS_ServerAddress = $"AQFSVR007\\AQFSVR007";
-        //public static string AMS_ServerName = $"AQFSVR007\\AQFSVR007";
-        public static string AMS_ServerAddress = $"10.50.11.50";
-        public static string AMS_ServerName = $"10.50.11.50";
+        public static string AMS_ServerAddress = $"AQFSVR011";
+        public static string AMS_ServerName = $"AQFSVR011";
+        //public static string AMS_ServerAddress = $"10.50.11.50";
+        //public static string AMS_ServerName = $"10.50.11.50";
         public static string AMS_ActiveDB = "AMS";
         public static string AMS_DB_User = "sa";
         public static string AMS_DB_Pass = "AquaF33dHN2014";//
