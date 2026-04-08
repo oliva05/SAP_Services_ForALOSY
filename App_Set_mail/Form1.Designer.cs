@@ -170,7 +170,7 @@
             // 
             // timerGeneral
             // 
-            this.timerGeneral.Interval = 120000;
+            this.timerGeneral.Interval = 300000;
             this.timerGeneral.Tick += new System.EventHandler(this.timerGeneral_Tick);
             // 
             // Form1

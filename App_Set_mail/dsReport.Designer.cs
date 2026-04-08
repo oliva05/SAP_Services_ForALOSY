@@ -2384,6 +2384,10 @@ namespace App_Set_mail {
             
             private global::System.Data.DataColumn columnfecha_prd;
             
+            private global::System.Data.DataColumn columnwhs;
+            
+            private global::System.Data.DataColumn columnAccountCode;
+            
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public Lotes_to_SAPDataTable() {
@@ -2475,6 +2479,22 @@ namespace App_Set_mail {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn whsColumn {
+                get {
+                    return this.columnwhs;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn AccountCodeColumn {
+                get {
+                    return this.columnAccountCode;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             [global::System.ComponentModel.Browsable(false)]
             public int Count {
                 get {
@@ -2510,7 +2530,7 @@ namespace App_Set_mail {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
-            public Lotes_to_SAPRow AddLotes_to_SAPRow(int lote, decimal peso, decimal sacos, string turno, string ItemCode, System.DateTime fecha_vencimiento, System.DateTime fecha_prd) {
+            public Lotes_to_SAPRow AddLotes_to_SAPRow(int lote, decimal peso, decimal sacos, string turno, string ItemCode, System.DateTime fecha_vencimiento, System.DateTime fecha_prd, string whs, string AccountCode) {
                 Lotes_to_SAPRow rowLotes_to_SAPRow = ((Lotes_to_SAPRow)(this.NewRow()));
                 object[] columnValuesArray = new object[] {
                         lote,
@@ -2519,7 +2539,9 @@ namespace App_Set_mail {
                         turno,
                         ItemCode,
                         fecha_vencimiento,
-                        fecha_prd};
+                        fecha_prd,
+                        whs,
+                        AccountCode};
                 rowLotes_to_SAPRow.ItemArray = columnValuesArray;
                 this.Rows.Add(rowLotes_to_SAPRow);
                 return rowLotes_to_SAPRow;
@@ -2549,6 +2571,8 @@ namespace App_Set_mail {
                 this.columnItemCode = base.Columns["ItemCode"];
                 this.columnfecha_vencimiento = base.Columns["fecha_vencimiento"];
                 this.columnfecha_prd = base.Columns["fecha_prd"];
+                this.columnwhs = base.Columns["whs"];
+                this.columnAccountCode = base.Columns["AccountCode"];
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -2568,6 +2592,10 @@ namespace App_Set_mail {
                 base.Columns.Add(this.columnfecha_vencimiento);
                 this.columnfecha_prd = new global::System.Data.DataColumn("fecha_prd", typeof(global::System.DateTime), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnfecha_prd);
+                this.columnwhs = new global::System.Data.DataColumn("whs", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnwhs);
+                this.columnAccountCode = new global::System.Data.DataColumn("AccountCode", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnAccountCode);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -4125,6 +4153,38 @@ namespace App_Set_mail {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string whs {
+                get {
+                    try {
+                        return ((string)(this[this.tableLotes_to_SAP.whsColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'whs\' in table \'Lotes_to_SAP\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableLotes_to_SAP.whsColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string AccountCode {
+                get {
+                    try {
+                        return ((string)(this[this.tableLotes_to_SAP.AccountCodeColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'AccountCode\' in table \'Lotes_to_SAP\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableLotes_to_SAP.AccountCodeColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public bool IsloteNull() {
                 return this.IsNull(this.tableLotes_to_SAP.loteColumn);
             }
@@ -4205,6 +4265,30 @@ namespace App_Set_mail {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public void Setfecha_prdNull() {
                 this[this.tableLotes_to_SAP.fecha_prdColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IswhsNull() {
+                return this.IsNull(this.tableLotes_to_SAP.whsColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetwhsNull() {
+                this[this.tableLotes_to_SAP.whsColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsAccountCodeNull() {
+                return this.IsNull(this.tableLotes_to_SAP.AccountCodeColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetAccountCodeNull() {
+                this[this.tableLotes_to_SAP.AccountCodeColumn] = global::System.Convert.DBNull;
             }
         }
         

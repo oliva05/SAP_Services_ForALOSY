@@ -90,6 +90,8 @@
               <xs:element name="ItemCode" msprop:Generator_ColumnPropNameInTable="ItemCodeColumn" msprop:Generator_ColumnPropNameInRow="ItemCode" msprop:Generator_UserColumnName="ItemCode" msprop:Generator_ColumnVarNameInTable="columnItemCode" type="xs:string" minOccurs="0" />
               <xs:element name="fecha_vencimiento" msprop:Generator_ColumnPropNameInTable="fecha_vencimientoColumn" msprop:Generator_ColumnPropNameInRow="fecha_vencimiento" msprop:Generator_UserColumnName="fecha_vencimiento" msprop:Generator_ColumnVarNameInTable="columnfecha_vencimiento" type="xs:dateTime" minOccurs="0" />
               <xs:element name="fecha_prd" msprop:Generator_ColumnPropNameInTable="fecha_prdColumn" msprop:Generator_ColumnPropNameInRow="fecha_prd" msprop:Generator_UserColumnName="fecha_prd" msprop:Generator_ColumnVarNameInTable="columnfecha_prd" type="xs:dateTime" minOccurs="0" />
+              <xs:element name="whs" msprop:Generator_ColumnPropNameInRow="whs" msprop:Generator_ColumnPropNameInTable="whsColumn" msprop:Generator_ColumnVarNameInTable="columnwhs" msprop:Generator_UserColumnName="whs" type="xs:string" minOccurs="0" />
+              <xs:element name="AccountCode" msprop:Generator_ColumnPropNameInRow="AccountCode" msprop:Generator_ColumnPropNameInTable="AccountCodeColumn" msprop:Generator_ColumnVarNameInTable="columnAccountCode" msprop:Generator_UserColumnName="AccountCode" type="xs:string" minOccurs="0" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -101,7 +103,7 @@
               <xs:element name="itemname" msprop:Generator_ColumnPropNameInTable="itemnameColumn" msprop:Generator_ColumnPropNameInRow="itemname" msprop:Generator_UserColumnName="itemname" msprop:Generator_ColumnVarNameInTable="columnitemname" type="xs:string" minOccurs="0" />
               <xs:element name="peso" msprop:Generator_ColumnPropNameInTable="pesoColumn" msprop:Generator_ColumnPropNameInRow="peso" msprop:Generator_UserColumnName="peso" msprop:Generator_ColumnVarNameInTable="columnpeso" type="xs:decimal" minOccurs="0" />
               <xs:element name="bodega" msprop:Generator_ColumnPropNameInTable="bodegaColumn" msprop:Generator_ColumnPropNameInRow="bodega" msprop:Generator_UserColumnName="bodega" msprop:Generator_ColumnVarNameInTable="columnbodega" type="xs:string" minOccurs="0" />
-              <xs:element name="isReproceso" msprop:Generator_UserColumnName="isReproceso" msprop:Generator_ColumnPropNameInTable="isReprocesoColumn" msprop:Generator_ColumnPropNameInRow="isReproceso" msprop:Generator_ColumnVarNameInTable="columnisReproceso" type="xs:string" minOccurs="0" />
+              <xs:element name="isReproceso" msprop:Generator_ColumnPropNameInTable="isReprocesoColumn" msprop:Generator_ColumnPropNameInRow="isReproceso" msprop:Generator_UserColumnName="isReproceso" msprop:Generator_ColumnVarNameInTable="columnisReproceso" type="xs:string" minOccurs="0" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>

@@ -36,6 +36,8 @@ namespace App_Set_mail
         string endHTMl;
         bool enviarC = false;
 
+        private bool procesando = false;
+
         public enum StatusConexionSAP
         {
             Desconectado = 0,
@@ -112,13 +114,17 @@ namespace App_Set_mail
 
         void StopServices()
         {
-            timerLotesPT_SAP.Enabled = 
-            timerSubirOrdenesCompra.Enabled = 
-            timerSubirRequisasSAP.Enabled = false;
+            //timerLotesPT_SAP.Enabled = 
+            //timerSubirOrdenesCompra.Enabled = 
+            //timerSubirRequisasSAP.Enabled = false;
 
-            timerLotesPT_SAP.Stop();
-            timerSubirOrdenesCompra.Stop();
-            timerSubirRequisasSAP.Stop();
+            //timerLotesPT_SAP.Stop();
+            //timerSubirOrdenesCompra.Stop();
+            //timerSubirRequisasSAP.Stop();
+
+            timerGeneral.Enabled = false;
+            timerGeneral.Stop();
+
             lblEstado.Text = "Apagado";
             Encendido = 0;
         }
@@ -130,13 +136,16 @@ namespace App_Set_mail
 
         void PlayServices()
         {
-            timerSubirOrdenesCompra.Enabled =
-            timerLotesPT_SAP.Enabled = 
-            timerSubirRequisasSAP.Enabled = true;
+            //timerSubirOrdenesCompra.Enabled =
+            //timerLotesPT_SAP.Enabled = 
+            //timerSubirRequisasSAP.Enabled = true;
 
-            timerLotesPT_SAP.Start();
-            timerSubirOrdenesCompra.Start();
-            timerSubirRequisasSAP.Start();
+            //timerLotesPT_SAP.Start();
+            //timerSubirOrdenesCompra.Start();
+            //timerSubirRequisasSAP.Start();
+
+            timerGeneral.Enabled = true;
+            timerGeneral.Start();
 
             lblEstado.Text = "Encendido";
             Encendido = 1;
@@ -205,6 +214,7 @@ namespace App_Set_mail
             public DateTime FechaVencimiento;
             public DateTime FechaProduccion;
             public string BarcodeTarima;
+            public string AccountCode;
         }
 
         private void timerLotesPT_SAP_Tick(object sender, EventArgs e)
@@ -364,6 +374,8 @@ namespace App_Set_mail
                 row.sacos = tarima.cantidadUnidades;
                 row.fecha_prd = tarima.FechaProduccion;
                 row.fecha_vencimiento = tarima.FechaVencimiento;
+                row.AccountCode = tarima.AccountCode;
+                row.whs = tarima.CodBodega;
                 dsReport1.Lotes_to_SAP.AddLotes_to_SAPRow(row);
                 dsReport1.AcceptChanges();
                 return;
@@ -405,6 +417,8 @@ namespace App_Set_mail
                 row.sacos = tarima.cantidadUnidades;
                 row.fecha_prd = tarima.FechaProduccion;
                 row.fecha_vencimiento = tarima.FechaVencimiento;
+                row.AccountCode = tarima.AccountCode;
+                row.whs = tarima.CodBodega;
                 dsReport1.Lotes_to_SAP.AddLotes_to_SAPRow(row);
                 dsReport1.AcceptChanges();
             }
@@ -610,10 +624,10 @@ namespace App_Set_mail
 
         private void timerSubirRequisasSAP_Tick(object sender, EventArgs e)
         {
-            ProcesarRequisasPendientes();
+            //ProcesarRequisasPendientes();
         }
 
-        private void ProcesarRequisasPendientes()
+        private void ProcesarRequisasPendientes(SAPbobsCOM.Company oCmp, string origen)
         {
             try
             {
@@ -625,7 +639,7 @@ namespace App_Set_mail
                 using (SqlConnection conn = new SqlConnection(dp.ConnectionStringALOSY))
                 { 
                     conn.Open();
-                    SAPbobsCOM.Company oCmp = dp.CompanyMake("interfaz.alosy", "Aq4x_3Fj2#");
+                    //SAPbobsCOM.Company oCmp = dp.CompanyMake("interfaz.alosy", "Aq4x_3Fj2#");
                     foreach (var idRequisa in requisiciones)
                     {
                         try
@@ -692,21 +706,21 @@ namespace App_Set_mail
                                 EntryH.Lines.ItemCode = row.itemcode;
                                 EntryH.Lines.Quantity = Convert.ToDouble(row.peso);
 
-                                if (row.isReproceso == "Y")
-                                {
-                                    //Detalles de Lineas Reproceso
-                                    List<InfoRequisaDetalleReproceso> arrayReproceso = new List<InfoRequisaDetalleReproceso>();
+                                //if (row.isReproceso == "Y")
+                                //{
+                                //    //Detalles de Lineas Reproceso
+                                //    List<InfoRequisaDetalleReproceso> arrayReproceso = new List<InfoRequisaDetalleReproceso>();
 
-                                    arrayReproceso = GetLotesReprocesoEntregado(idRequisa, row.itemcode);
+                                //    arrayReproceso = GetLotesReprocesoEntregado(idRequisa, row.itemcode);
                                     
-                                    foreach (var item in arrayReproceso)
-                                    {
-                                        EntryH.Lines.BatchNumbers.BatchNumber = item.lote;
-                                        EntryH.Lines.BatchNumbers.Quantity = Convert.ToDouble(item.pesoxlote);
-                                        EntryH.Lines.BatchNumbers.Add();
-                                    }
-                                }
-                                i++;
+                                //    foreach (var item in arrayReproceso)
+                                //    {
+                                //        EntryH.Lines.BatchNumbers.BatchNumber = item.lote;
+                                //        EntryH.Lines.BatchNumbers.Quantity = Convert.ToDouble(item.pesoxlote);
+                                //        EntryH.Lines.BatchNumbers.Add();
+                                //    }
+                                //}
+                                //i++;
                             }
 
                             string errMesg = "";
@@ -731,7 +745,7 @@ namespace App_Set_mail
                             else
                             {
                                 oCmp.GetLastError(out errNum, out errMesg);
-                                SetErrorGrid("timerSubirRequisasSAP: " + errMesg, "Error");
+                                SetErrorGrid("TimerGeneralSubirRequisasSAP: " + errMesg, "Error");
                             }
 
                         }
@@ -739,18 +753,18 @@ namespace App_Set_mail
                         {
                             EstadoConexionActual = StatusConexionSAP.Desconectado;
                             //CajaDialogo.Error(ec.Message);
-                            SetErrorGrid("timerSubirRequisasSAP: " + ex.Message, "");
+                            SetErrorGrid("TimerGeneralSubirRequisasSAP: " + ex.Message, "");
                         }
                     }//FIn de Ciclo
 
-                    try
-                    {
-                        EstadoConexionActual = StatusConexionSAP.Desconectado;
-                        oCmp.Disconnect();
-                    }
-                    catch
-                    {
-                    }
+                    //try
+                    //{
+                    //    EstadoConexionActual = StatusConexionSAP.Desconectado;
+                    //    oCmp.Disconnect();
+                    //}
+                    //catch
+                    //{
+                    //}
                 }
             }
             catch (Exception ex)
@@ -860,7 +874,538 @@ namespace App_Set_mail
 
         private void timerGeneral_Tick(object sender, EventArgs e)
         {
+            if (procesando)
+                return;
 
+            SAPbobsCOM.Company oCmp = null;
+
+            try
+            {
+                procesando = true;
+                oCmp = dp.CompanyMake("interfaz.alosy", "Aq4x_3Fj2#");
+
+                if (!oCmp.Connected)
+                    throw new Exception("No se pudo conectar a SAP.");
+
+                ProcesarLotePT_Y_Reproceso_SAP(oCmp, "LotePT_SAP");
+               
+                ProcesarOrdenesDeCompraToSAP(oCmp, "SubirOrdenesCompra");
+
+                ProcesarRequisasPendientes(oCmp, "RequisasMP");
+
+                ProcesarRquisasMaterialEmpaque(oCmp, "RequisasME");
+
+                //ProcesarRecuentoInventario(oCmp, "RecuentoInventario");
+
+                EstadoConexionActual = StatusConexionSAP.Desconectado;
+
+            }
+            catch (Exception ex)
+            {
+                SetErrorGrid(ex.Message, "Error Conexion SAP");
+                procesando = false;
+            }
+            finally
+            {
+                if (oCmp != null && oCmp.Connected)
+                    oCmp.Disconnect();
+                procesando = false;
+            }
+        }
+
+        private void ProcesarRecuentoInventario(Company oCmp, string v)
+        {
+            throw new NotImplementedException();
+            //Todavia no existe nada
+            //Se va procesar Materia Prima, Producto Terminado y Material de Empaque
+
+
+        }
+
+        private void ProcesarRquisasMaterialEmpaque(Company oCmp, string v)
+        {
+            DataOperations dp = new DataOperations();
+
+            using (SqlConnection con = new SqlConnection(dp.ConnectionStringAMS))
+            {
+                con.Open();
+
+                var requisiciones = ObtenerRequisasMaterialEmpaqueParaProcesar(con);
+                if (requisiciones.Count == 0)
+                    return;
+
+                foreach (var idRequisa in requisiciones)
+                {
+                    SAPbobsCOM.Documents EntryH = null;
+
+                    try
+                    {
+
+                        List<InfoRequisaDetalleME> listMaterialEmpaque = new List<InfoRequisaDetalleME>();
+                        string RequisaNumero = string.Empty;
+
+                        DateTime FechaPosteo = DateTime.MinValue;
+
+
+                        using (SqlCommand cmd = new SqlCommand("spServiceRequisasMeHeader", con))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@idRequisa", Convert.ToInt32(idRequisa));
+                            SqlDataReader reader = cmd.ExecuteReader();
+                            if (reader.Read())
+                            {
+                                RequisaNumero = reader.GetString(0);
+                                FechaPosteo = reader.GetDateTime(1);
+                            }
+                            reader.Close();
+                        }
+
+                        using (SqlCommand cmd = new SqlCommand("spServiceGetDetalleRequisaMeById", con))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
+                            SqlDataReader dr = cmd.ExecuteReader();
+                            while (dr.Read())
+                            {
+                                InfoRequisaDetalleME detalleRequisa = new InfoRequisaDetalleME();
+                                detalleRequisa.idMe = Convert.ToInt32(dr.GetInt32(0));
+                                detalleRequisa.itemCode = dr.GetString(1);
+                                detalleRequisa.itemName = dr.GetString(2);
+                                detalleRequisa.cantidad = dr.GetDecimal(3);
+                                detalleRequisa.bodega = dr.GetString(4);
+                                detalleRequisa.accountCode = dr.GetString(5);
+                                listMaterialEmpaque.Add(detalleRequisa);
+                            }
+                            dr.Close();
+
+                            // ---------------- SAP ----------------
+                            EntryH = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryGenExit);
+                            EstadoConexionActual = StatusConexionSAP.Conectado;
+                            DateTime HoyDate = dp.Now();
+                            EntryH.DocDate = FechaPosteo == DateTime.MinValue ? DateTime.Today : FechaPosteo;
+                            EntryH.TaxDate = HoyDate;
+
+                            EntryH.Comments = "Generado desde Interfaz automática AMS basado en Requisa: " + RequisaNumero;
+
+                            int i = 0;
+                            foreach (var row in listMaterialEmpaque)
+                            {
+                                if (i > 0)
+                                    EntryH.Lines.Add();
+                                EntryH.Lines.ItemCode = row.itemCode;
+                                EntryH.Lines.AccountCode = row.accountCode;
+                                EntryH.Lines.WarehouseCode = row.bodega;
+                                EntryH.Lines.Quantity = Convert.ToDouble(row.cantidad);
+
+                                i++;
+                            }
+
+                            string errMesg = "";
+                            int errNum = 0;
+
+                            errNum = EntryH.Add();//Guardar Header
+
+                            if (errNum == 0)//Guardado con Exito!
+                            {
+                                //Vamos a Ligar la Salida de mercancia a la Requisa
+                                string DocEntry = oCmp.GetNewObjectKey();
+
+                                int iDocEntryHeader = dp.ValidateNumberInt32(DocEntry);
+
+                                ConfirmarRequisaME(idRequisa, DocEntry, con);
+
+                                SetErrorGrid("Salida de Mercancia ME Exitosa! DocEntry: " + iDocEntryHeader.ToString() + "", "Notificación");
+
+                            }
+                            else
+                            {
+                                oCmp.GetLastError(out errNum, out errMesg);
+                                SetErrorGrid("Func. Salida Mercancia ME (IdReq: " + idRequisa + "): " + errMesg, " Error");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        SetErrorGrid("Excepcion requisiciones ME " + idRequisa + ":" + ex.Message, "Error");
+                    }
+                    finally 
+                    {
+                        if (EntryH != null) 
+                        {
+                            Marshal.ReleaseComObject(EntryH);
+                            EntryH = null;
+                        }
+                    }
+                }
+            }
+
+            
+        }
+
+        private void ConfirmarRequisaME(int idRequisa, string docEntry, SqlConnection con)
+        {
+            using (SqlCommand cmd = new SqlCommand("spServiceConfirmarRequisasMe", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@id", idRequisa);
+                cmd.Parameters.AddWithValue("@docEntry", docEntry);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public class InfoRequisaDetalleME
+        {
+            public int idMe;
+            public string itemCode;
+            public string itemName;
+            public decimal cantidad;
+            public string bodega;
+            public string accountCode;
+        }
+
+        private List<int> ObtenerRequisasMaterialEmpaqueParaProcesar(SqlConnection connection)
+        {
+            List<int> list = new List<int>();
+
+            using (SqlConnection conn = new SqlConnection(dp.ConnectionStringAMS))
+            {
+                conn.Open();
+
+                string query = @"spServiceRequisasDisponiblesProcesar";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(dr.GetInt32(0));
+                }
+                dr.Close();
+            }
+
+            return list;
+        }
+
+        private void ProcesarLotePT_Y_Reproceso_SAP(Company oCmp, string origen)
+        {
+            try
+            {
+                //Tambien se agrega Reproceso!
+                DataOperations dp = new DataOperations();
+                SqlConnection con = new SqlConnection(dp.ConnectionStringALOSY);
+                con.Open();
+
+                SqlCommand cmd = new SqlCommand("[sp_get_cant_tarimas_pendientes_subir_a_SAPV2]", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                SqlDataReader dr = cmd.ExecuteReader();
+                int ContadorTarimasPendientes = 0;
+                if (dr.Read())
+                {
+                    ContadorTarimasPendientes = dr.GetInt32(0);
+                }
+                dr.Close();
+
+                ArrayList ListaTarimas = new ArrayList();
+                if (ContadorTarimasPendientes > 0)
+                {
+
+                    if (EstadoConexionActual == StatusConexionSAP.Desconectado)
+                    {
+                        bool guardado = false;
+                        SqlCommand cmd2 = new SqlCommand("[sp_get_tarimas_pendientes_subir_a_SAPV2]", con);
+                        cmd2.CommandType = CommandType.StoredProcedure;
+                        SqlDataReader dr2 = cmd2.ExecuteReader();
+                        while (dr2.Read())
+                        {
+                            ItemTarima Tarima = new ItemTarima();
+                            Tarima.idTarima = dr2.GetInt32(0);
+                            Tarima.ItemCode = dr2.GetString(1);
+                            Tarima.cantidadUnidades = dr2.GetDecimal(2);
+                            Tarima.pesoKg = dr2.GetDecimal(3);
+                            Tarima.CodBodega = dr2.GetString(4);
+                            Tarima.Lote_producto_termiado = dr2.GetInt32(5);
+                            Tarima.IdTurno = dr2.GetInt32(6);
+                            Tarima.FechaProduccion = dr2.GetDateTime(7);
+                            Tarima.FechaVencimiento = dr2.GetDateTime(8);
+                            Tarima.BarcodeTarima = dr2.GetString(9);
+                            Tarima.AccountCode = dr2.GetString(10);
+                            //Lista de tarimas
+                            ListaTarimas.Add(Tarima);
+
+                            //Resumen de lotes
+                            AddTarimaToLoteResumen(Tarima);
+                        }
+                        dr2.Close();
+
+                        //Posteo de Entrada PT en SAP
+                        foreach (dsReport.Lotes_to_SAPRow row in dsReport1.Lotes_to_SAP)
+                        {
+                            //Header SAP
+                            //SAPbobsCOM.Company oCmp = dp.CompanyMake("interfaz.alosy", "Aq4x_3Fj2#");
+                            SAPbobsCOM.Documents EntryH = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryGenEntry);
+                            EstadoConexionActual = StatusConexionSAP.Conectado;
+                            DateTime HoyDate = dp.Now();
+                            EntryH.DocDate = HoyDate;
+                            EntryH.TaxDate = HoyDate;
+                            EntryH.Comments = "Generado desde Interfaz automática ALOSY";
+
+                            //Detalle de Lineas
+                            EntryH.Lines.AccountCode = row.AccountCode;
+                            EntryH.Lines.WarehouseCode = row.whs;
+
+                            EntryH.Lines.ItemCode = row.ItemCode;
+                            EntryH.Lines.Quantity = Convert.ToDouble(row.peso);//Kg
+                            EntryH.Lines.UserFields.Fields.Item("U_Sacos").Value = Convert.ToDouble(row.sacos); //Sacos
+
+                            EntryH.Lines.BatchNumbers.Quantity = Convert.ToDouble(row.peso);//KG
+                            EntryH.Lines.BatchNumbers.UserFields.Fields.Item("U_Sacos").Value = Convert.ToDouble(row.sacos);//Unidades
+                            EntryH.Lines.BatchNumbers.UserFields.Fields.Item("U_U_Turno").Value = row.turno.ToString();
+                            EntryH.Lines.BatchNumbers.ExpiryDate = row.fecha_vencimiento;
+                            EntryH.Lines.BatchNumbers.ManufacturingDate = row.fecha_prd;
+                            EntryH.Lines.BatchNumbers.AddmisionDate = HoyDate;
+                            EntryH.Lines.BatchNumbers.BatchNumber = row.lote.ToString();//Lote
+                            EntryH.Lines.UnitPrice = 38.00;
+
+                            //EntryH.Lines.BatchNumbers.ManufacturerSerialNumber = tarx.BarcodeTarima; //"Atributo1 _ Dato TARIMA3";
+                            EntryH.Lines.Add();//Guardar Linea
+
+                            string errMsg = "";
+                            int errNum = 0;
+
+                            errNum = EntryH.Add();//Guardar Header
+                            string DocEntry = oCmp.GetNewObjectKey();//Numero header sap
+                            string docType = oCmp.GetNewObjectType();
+                            int iDocEntryHeaderSAP = dp.ValidateNumberInt32(DocEntry);
+
+
+
+                            if (errNum == 0)//Guardo con exito
+                            {
+                                //Update Tarimas como subidas
+                                foreach (ItemTarima tarx in ListaTarimas)
+                                {
+                                    if (tarx.ItemCode == row.ItemCode && tarx.Lote_producto_termiado == row.lote && iDocEntryHeaderSAP > 0)
+                                    {
+                                        SqlCommand cmd3 = new SqlCommand("sp_set_tarima_as_up_to_sap_pt", con);
+                                        cmd3.CommandType = CommandType.StoredProcedure;
+                                        cmd3.Parameters.AddWithValue("@DocEntry", DocEntry);
+                                        cmd3.Parameters.AddWithValue("@idTarima", tarx.idTarima);
+                                        cmd3.ExecuteNonQuery();
+                                    }
+                                }
+                                //Mensaje de operacion exitosa.
+                                SetErrorGrid("Entrada de Mercancias Exitosa! DocEntry: " + iDocEntryHeaderSAP.ToString() + " ", "Notificación");
+                            }
+                            else
+                            {
+                                oCmp.GetLastError(out errNum, out errMsg);
+                                //Guardar Mensaje en el grid del error
+                                SetErrorGrid(origen +" "+ errMsg, "Error");
+                            }
+
+                            //try
+                            //{
+                            //    EstadoConexionActual = StatusConexionSAP.Desconectado;
+                            //    Thread.Sleep(100);
+                            //    oCmp.Disconnect();
+                            //}
+                            //catch { }
+
+                        }//End Foreach Lotes resumen para headers de SAP
+
+                        //Limpiar ambas listas para la siguiente ejecucion.
+                        dsReport1.Lotes_to_SAP.Clear();
+                        ListaTarimas.Clear();
+                    }
+                }
+                else
+                {
+                    return;//No hay tarimas que procesar
+                }
+
+                con.Close();
+            }
+            catch (Exception ex)
+            {
+                //CajaDialogo.Error(ec.Message);
+                SetErrorGrid(origen+": "+ ex.Message, "");
+            }
+        }
+
+        private void ProcesarOrdenesDeCompraToSAP(Company oCmp, string origen)
+        {
+            string IdOC_string = null;
+            try
+            {
+                DataOperations dp = new DataOperations();
+                SqlConnection con = new SqlConnection(dp.ConnectionStringALOSY);
+                con.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.sp_get_cant_ordenes_compra_pendientes_subir_a_sap", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                SqlDataReader dr = cmd.ExecuteReader();
+                int ContadorOrdenesCompraPendientes = 0;
+                if (dr.Read())
+                    ContadorOrdenesCompraPendientes = dr.GetInt32(0);
+
+                dr.Close();
+
+                ArrayList ListaOrdenesH = new ArrayList();
+                if (ContadorOrdenesCompraPendientes > 0)
+                {
+                    if (EstadoConexionActual == StatusConexionSAP.Desconectado)
+                    {
+                        bool guardado = false;
+                        SqlCommand cmd2 = new SqlCommand("dbo.sp_get_cant_ordenes_compra_pendientes_subir_a_sap_list", con);
+                        cmd2.CommandType = CommandType.StoredProcedure;
+                        SqlDataReader dr2 = cmd2.ExecuteReader();
+                        while (dr2.Read())
+                        {
+                            //ItemTarima Tarima = new ItemTarima();
+                            int IdOrdenCompra = dr2.GetInt32(0);
+                            OrdenCompraALOSY OrdenH = new OrdenCompraALOSY();
+                            if (OrdenH.RecuperarRegistro(IdOrdenCompra))
+                            {
+                                //Lista de ordenes de compra
+                                ListaOrdenesH.Add(OrdenH);
+                            }
+                        }
+                        dr2.Close();
+
+                        //Posteo de Orden de Compra en SAP
+                        foreach (OrdenCompraALOSY OrdenH_forSAP in ListaOrdenesH)
+                        {
+                            //Header SAP
+                            //SAPbobsCOM.Company oCmp = dp.CompanyMake("interfaz.alosy", "Aq4x_3Fj2#");
+                            SAPbobsCOM.Documents PO = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oPurchaseOrders);
+                            EstadoConexionActual = StatusConexionSAP.Conectado;
+                            //SAPbobsCOM.Documents PO = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oDrafts);
+                            DateTime HoyDate = dp.Now();
+                            PO.DocDate = OrdenH_forSAP.DocDate;
+                            PO.TaxDate = OrdenH_forSAP.TaxDate;
+                            PO.DocDueDate = OrdenH_forSAP.DocDueDate;
+                            PO.DocObjectCode = SAPbobsCOM.BoObjectTypes.oPurchaseOrders;
+
+                            PO.CardCode = OrdenH_forSAP.CardCode;
+                            PO.CardName = OrdenH_forSAP.CardName;
+                            PO.Address = OrdenH_forSAP.Address;
+        
+                            PO.NumAtCard = OrdenH_forSAP.NumAtCard;
+
+                            PO.UserFields.Fields.Item("U_TipoOrden").Value = OrdenH_forSAP.TipoOrden.ToString();
+                            //PO.UserFields.Fields.Item("U_AquaExoneracion").Value = OrdenH_forSAP.AquaExoneracion;
+                            //PO.UserFields.Fields.Item("U_FechaExoneracion").Value = OrdenH_forSAP.FechaExoneracion;
+                            PO.UserFields.Fields.Item("U_incoterm").Value = OrdenH_forSAP.U_incoterm;
+
+                            if (string.IsNullOrEmpty(OrdenH_forSAP.Comments))
+                            {
+                                PO.Comments = "N/D";
+                            }
+                            else
+                            {
+                                if (OrdenH_forSAP.Comments.Length > 253)
+                                {
+                                    PO.Comments = OrdenH_forSAP.Comments.Substring(0, 253);
+                                }
+                                else
+                                {
+                                    PO.Comments = OrdenH_forSAP.Comments;
+                                }
+                            }
+
+                            PO.DocTotal = Convert.ToDouble(OrdenH_forSAP.DocTotal);
+                            IdOC_string = OrdenH_forSAP.Id.ToString();
+                            string DocCurrency_ = OrdenH_forSAP.DocCur.Trim();
+                            PO.DocCurrency = DocCurrency_;
+                            //PO.RelatedEntry
+                            //PO.VatSum = Convert.ToDouble(OrdenH_forSAP.ISV);
+
+                            //PO.Series = 16;// int.Parse("16N");
+                            //PO.DocNum = 211000002;
+
+
+                            SqlCommand cmdLines = new SqlCommand("sp_get_orden_compra_d_for_sap", con);
+                            cmdLines.CommandType = CommandType.StoredProcedure;
+                            cmdLines.Parameters.AddWithValue("@id_ordenH", OrdenH_forSAP.Id);
+                            SqlDataReader reader = cmdLines.ExecuteReader();
+                            while (reader.Read())
+                            {
+                                PO.Lines.ItemCode = reader.IsDBNull(reader.GetOrdinal("ItemCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("ItemCode"));
+                                PO.Lines.ItemDescription = reader.IsDBNull(reader.GetOrdinal("Description")) ? string.Empty : reader.GetString(reader.GetOrdinal("Description"));
+                                //PO.Lines.UserFields.Fields.Item("Capitulo_Codigo").Value = reader.IsDBNull(reader.GetOrdinal("Capitulo_Codigo")) ? string.Empty : reader.GetString(reader.GetOrdinal("Capitulo_Codigo"));
+                                //PO.Lines.UserFields.Fields.Item("Partida_Arancelaria").Value = reader.IsDBNull(reader.GetOrdinal("Partida_Arancelaria")) ? string.Empty : reader.GetString(reader.GetOrdinal("Partida_Arancelaria"));
+
+                                PO.Lines.Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("Quantity")));
+                                PO.Lines.Price = reader.IsDBNull(reader.GetOrdinal("Unite_Price")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("Unite_Price")));
+                                PO.Lines.DiscountPercent = reader.IsDBNull(reader.GetOrdinal("DiscPrcnt")) ? Convert.ToDouble(0.00) : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("DiscPrcnt")));
+                                string currency_ = reader.IsDBNull(reader.GetOrdinal("Currency")) ? string.Empty : reader.GetString(reader.GetOrdinal("Currency")).Trim();
+                                PO.Lines.Currency = currency_;
+                                string TaxCode = reader.IsDBNull(reader.GetOrdinal("TaxCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("TaxCode"));
+                                PO.Lines.TaxCode = TaxCode.Trim();
+                                PO.Lines.WarehouseCode = reader.IsDBNull(reader.GetOrdinal("WhsCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("WhsCode")).Trim();
+                                PO.Lines.TaxTotal = reader.IsDBNull(reader.GetOrdinal("isv")) ? 0 : Convert.ToDouble(reader.GetDecimal(reader.GetOrdinal("isv")));
+
+                                int IdBaseRef_NumSolicitud = reader.IsDBNull(reader.GetOrdinal("base_ref")) ? 0 : Convert.ToInt32(reader.GetInt32(reader.GetOrdinal("base_ref")));
+           
+                                if (PO.Lines.Price <= 0)
+                                {
+                                    throw new Exception("Se Intento crear una OC con una linea con precio <=0, id Orden H: " + OrdenH_forSAP.Id.ToString());
+                                }
+
+                                PO.Lines.Add();
+                            }
+                            reader.Close();
+
+                            int res = PO.Add();
+
+                            string errMsg = "";
+                            int errNum = 0;
+                            if (res == 0)
+                            {
+                                string DocEntry = oCmp.GetNewObjectKey();
+                                OrdenH_forSAP.UpdateStatusOrderH(OrdenH_forSAP.Id, dp.ValidateNumberInt32(DocEntry));
+                                //MessageBox.Show("Add Purchase Order successfull");
+                                SetErrorGrid("Creacion de OC Exitosa! DocEntry: " + DocEntry + " " + "Id OC: " + IdOC_string, "Notificación");
+                            }
+                            else
+                            {
+                                IdOC_string = OrdenH_forSAP.Id.ToString();
+                                // MessageBox.Show(ocompany.GetLastErrorDescription()); //@scope_identity
+                                oCmp.GetLastError(out errNum, out errMsg);
+                                //Guardar Mensaje en el grid del error
+                                SetErrorGrid("timerSubirOrdenesCompra: " + errMsg + " IdOC: " + IdOC_string, "Error");
+                            }
+
+                            //try
+                            //{
+                            //    EstadoConexionActual = StatusConexionSAP.Desconectado;
+                            //    Thread.Sleep(100);
+                            //    oCmp.Disconnect();
+                            //    //EstadoConexionActual = StatusConexionSAP.Desconectado;
+                            //}
+                            //catch { }
+
+                        }//End Foreach Lotes resumen para headers de SAP
+
+                        //Limpiar ambas listas para la siguiente ejecucion.
+                        dsReport1.Lotes_to_SAP.Clear();
+                        ListaOrdenesH.Clear();
+                        con.Close();
+                    }
+
+                }
+                else
+                {
+                    EstadoConexionActual = StatusConexionSAP.Desconectado;
+                    return;//No hay tarimas que procesar
+                }
+            }
+            catch (Exception ex)
+            {
+                EstadoConexionActual = StatusConexionSAP.Desconectado;
+                //CajaDialogo.Error(ec.Message);
+                SetErrorGrid("timerSubirOrdenesCompra: " + ex.Message, "");
+            }
         }
     }
 }
