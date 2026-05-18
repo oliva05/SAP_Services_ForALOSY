@@ -627,145 +627,173 @@ namespace App_Set_mail
             //ProcesarRequisasPendientes();
         }
 
-        private void ProcesarRequisasPendientes(SAPbobsCOM.Company oCmp, string origen)
+        private void ProcesarRequisasMateriaPrima(SAPbobsCOM.Company oCmp, string origen)
         {
             try
             {
-                var requisiciones = ObtenerRequisasListasParaProcesar();
 
-                if (requisiciones.Count == 0)
-                    return;
-
+                //Aqui se debe validar si estamos con un Recuento de Inventario para
+                //--Pausar procesamiento de Salidas
+                //--Esperar que a que el inventario sea cargado (Posteado en SAP)
+                //Hacerlo funcionar con fecha de contabilziacion de recuento de inventario
+                bool HayBloqueo = true;
+                DateTime FechaCorteInventario;
                 using (SqlConnection conn = new SqlConnection(dp.ConnectionStringALOSY))
-                { 
-                    conn.Open();
-                    //SAPbobsCOM.Company oCmp = dp.CompanyMake("interfaz.alosy", "Aq4x_3Fj2#");
-                    foreach (var idRequisa in requisiciones)
+                {
+                    using (SqlCommand cmd = new SqlCommand("sp_sap_service_validacion_recuento_activo", conn))
                     {
-                        try
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        using (SqlDataReader dr = cmd.ExecuteReader())
                         {
-                            List<InfoRequisaDetalle> listMateriasPrimas = new List<InfoRequisaDetalle>();
-
-                            dsReport1.requisa_to_SAP.Clear();
-                            string RequisaNumero = string.Empty;
-                            int LotePT = 0;
-                            DateTime FechaPosteo = DateTime.MinValue;
-
-                            using (SqlCommand cmd = new SqlCommand("spgGetInfoRequisaById", conn))
-                            {
-                                cmd.CommandType = CommandType.StoredProcedure;
-                                cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
-                                SqlDataReader dr = cmd.ExecuteReader();
-                                if (dr.Read())
-                                {
-                                    RequisaNumero = dr.GetString(0);
-                                    LotePT = dr.GetInt32(1);
-                                    FechaPosteo = dr.GetDateTime(2);
-                                }
-                                dr.Close();
-                            }
-
-                            using (SqlCommand cmd = new SqlCommand("spgGetInfoRequisaDetalleById", conn))
-                            {
-                                cmd.CommandType = CommandType.StoredProcedure;
-                                cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
-                                SqlDataReader dr = cmd.ExecuteReader();
-                                while (dr.Read())
-                                {
-                                    InfoRequisaDetalle detalleRequisa = new InfoRequisaDetalle();
-                                    detalleRequisa.idMp = Convert.ToInt32(dr.GetInt32(0));
-                                    detalleRequisa.itemCode = dr.GetString(1);
-                                    detalleRequisa.itemName = dr.GetString(2);
-                                    detalleRequisa.pesoKg = Convert.ToDecimal(dr.GetDecimal(3));
-                                    detalleRequisa.bodega = dr.GetString(4);
-                                    detalleRequisa.isReproceso = dr.GetString(5);
-                                    listMateriasPrimas.Add(detalleRequisa);
-
-                                    AddDetalleRequisaById(detalleRequisa);
-                                }
-                                dr.Close();
-                            }
-
-
-                            //Header SAP
-                            SAPbobsCOM.Documents EntryH = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryGenExit);
-                            EstadoConexionActual = StatusConexionSAP.Conectado;
-                            DateTime HoyDate = dp.Now();
-                            EntryH.DocDate = FechaPosteo;
-                            EntryH.TaxDate = HoyDate;
-                            
-                            EntryH.Comments = "Generado desde Interfaz automática ALOSY basado en Requisa: "+ RequisaNumero + " para Lote PT: "+LotePT.ToString();
-
-                            int i = 0;
-                            foreach (var row in dsReport1.requisa_to_SAP)
-                            {
-                                if (i > 0)
-                                    EntryH.Lines.Add();
-                                EntryH.Lines.AccountCode = "_SYS00000000210";//Costo de venta de materia prima - 51000001
-                                EntryH.Lines.WarehouseCode = row.bodega;
-                                EntryH.Lines.ItemCode = row.itemcode;
-                                EntryH.Lines.Quantity = Convert.ToDouble(row.peso);
-
-                                //if (row.isReproceso == "Y")
-                                //{
-                                //    //Detalles de Lineas Reproceso
-                                //    List<InfoRequisaDetalleReproceso> arrayReproceso = new List<InfoRequisaDetalleReproceso>();
-
-                                //    arrayReproceso = GetLotesReprocesoEntregado(idRequisa, row.itemcode);
-                                    
-                                //    foreach (var item in arrayReproceso)
-                                //    {
-                                //        EntryH.Lines.BatchNumbers.BatchNumber = item.lote;
-                                //        EntryH.Lines.BatchNumbers.Quantity = Convert.ToDouble(item.pesoxlote);
-                                //        EntryH.Lines.BatchNumbers.Add();
-                                //    }
-                                //}
-                                //i++;
-                            }
-
-                            string errMesg = "";
-                            int errNum = 0;
-
-                            errNum = EntryH.Add();//Guardar Header
-                            
-
-
-                            if (errNum == 0)//Guardo con Exito!
-                            {
-                                //Vamos a Ligar la Salida de Mercancia a la Requisa
-                                string DocEntry = oCmp.GetNewObjectKey();//Numero header sap
-                                string docType = oCmp.GetNewObjectType();
-                                int iDocEntryHeaderSAP = dp.ValidateNumberInt32(DocEntry);
-                                ConfirmarRequisa(idRequisa, DocEntry, conn);
-
-                                SetErrorGrid("Salida de Mercancias Exitosa! DocEntry: " + iDocEntryHeaderSAP.ToString() + " ", "Notificación");
-                                Marshal.ReleaseComObject(EntryH);
-                                EntryH = null;
-                            }
-                            else
-                            {
-                                oCmp.GetLastError(out errNum, out errMesg);
-                                SetErrorGrid("TimerGeneralSubirRequisasSAP: " + errMesg, "Error");
-                            }
-
+                            HayBloqueo = Convert.ToBoolean(dr.GetBoolean(0));
+                            FechaCorteInventario = dr.GetDateTime(1);   
+                            dr.Close();
                         }
-                        catch (Exception ex)
-                        {
-                            EstadoConexionActual = StatusConexionSAP.Desconectado;
-                            //CajaDialogo.Error(ec.Message);
-                            SetErrorGrid("TimerGeneralSubirRequisasSAP: " + ex.Message, "");
-                        }
-                    }//FIn de Ciclo
-
-                    //try
-                    //{
-                    //    EstadoConexionActual = StatusConexionSAP.Desconectado;
-                    //    oCmp.Disconnect();
-                    //}
-                    //catch
-                    //{
-                    //}
+                    }                 
                 }
+
+                if (!HayBloqueo)
+                {
+                    var requisiciones = ObtenerRequisasListasParaProcesar(FechaCorteInventario);
+
+                    if (requisiciones.Count == 0)
+                        return;
+
+                    using (SqlConnection conn = new SqlConnection(dp.ConnectionStringALOSY))
+                    {
+                        conn.Open();
+                        //SAPbobsCOM.Company oCmp = dp.CompanyMake("interfaz.alosy", "Aq4x_3Fj2#");
+                        foreach (var idRequisa in requisiciones)
+                        {
+                            try
+                            {
+                                List<InfoRequisaDetalle> listMateriasPrimas = new List<InfoRequisaDetalle>();
+
+                                dsReport1.requisa_to_SAP.Clear();
+                                string RequisaNumero = string.Empty;
+                                int LotePT = 0;
+                                DateTime FechaPosteo = DateTime.MinValue;
+
+                                using (SqlCommand cmd = new SqlCommand("spgGetInfoRequisaById", conn))
+                                {
+                                    cmd.CommandType = CommandType.StoredProcedure;
+                                    cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
+                                    cmd.Parameters.AddWithValue("@FechaCorte", FechaCorteInventario);
+                                    SqlDataReader dr = cmd.ExecuteReader();
+                                    if (dr.Read())
+                                    {
+                                        RequisaNumero = dr.GetString(0);
+                                        LotePT = dr.GetInt32(1);
+                                        FechaPosteo = dr.GetDateTime(2);
+                                    }
+                                    dr.Close();
+                                }
+
+                                using (SqlCommand cmd = new SqlCommand("spgGetInfoRequisaDetalleById", conn))
+                                {
+                                    cmd.CommandType = CommandType.StoredProcedure;
+                                    cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
+                                    cmd.Parameters.AddWithValue("@FechaCorteInventario", FechaCorteInventario);
+                                    SqlDataReader dr = cmd.ExecuteReader();
+                                    while (dr.Read())
+                                    {
+                                        InfoRequisaDetalle detalleRequisa = new InfoRequisaDetalle();
+                                        detalleRequisa.idMp = Convert.ToInt32(dr.GetInt32(0));
+                                        detalleRequisa.itemCode = dr.GetString(1);
+                                        detalleRequisa.itemName = dr.GetString(2);
+                                        detalleRequisa.pesoKg = Convert.ToDecimal(dr.GetDecimal(3));
+                                        detalleRequisa.bodega = dr.GetString(4);
+                                        detalleRequisa.isReproceso = dr.GetString(5);
+                                        listMateriasPrimas.Add(detalleRequisa);
+
+                                        AddDetalleRequisaById(detalleRequisa);
+                                    }
+                                    dr.Close();
+                                }
+
+
+                                //Header SAP
+                                SAPbobsCOM.Documents EntryH = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryGenExit);
+                                EstadoConexionActual = StatusConexionSAP.Conectado;
+                                DateTime HoyDate = dp.Now();
+                                EntryH.DocDate = FechaPosteo;
+                                EntryH.TaxDate = HoyDate;
+
+                                EntryH.Comments = "Generado desde Interfaz automática ALOSY basado en Requisa: " + RequisaNumero + " para Lote PT: " + LotePT.ToString();
+
+                                int i = 0;
+                                foreach (var row in dsReport1.requisa_to_SAP)
+                                {
+                                    if (i > 0)
+                                        EntryH.Lines.Add();
+                                    EntryH.Lines.AccountCode = "_SYS00000000210";//Costo de venta de materia prima - 51000001
+                                    EntryH.Lines.WarehouseCode = row.bodega;
+                                    EntryH.Lines.ItemCode = row.itemcode;
+                                    EntryH.Lines.Quantity = Convert.ToDouble(row.peso);
+
+                                    //if (row.isReproceso == "Y")
+                                    //{
+                                    //    //Detalles de Lineas Reproceso
+                                    //    List<InfoRequisaDetalleReproceso> arrayReproceso = new List<InfoRequisaDetalleReproceso>();
+
+                                    //    arrayReproceso = GetLotesReprocesoEntregado(idRequisa, row.itemcode);
+
+                                    //    foreach (var item in arrayReproceso)
+                                    //    {
+                                    //        EntryH.Lines.BatchNumbers.BatchNumber = item.lote;
+                                    //        EntryH.Lines.BatchNumbers.Quantity = Convert.ToDouble(item.pesoxlote);
+                                    //        EntryH.Lines.BatchNumbers.Add();
+                                    //    }
+                                    //}
+                                    //i++;
+                                }
+
+                                string errMesg = "";
+                                int errNum = 0;
+
+                                errNum = EntryH.Add();//Guardar Header
+
+
+
+                                if (errNum == 0)//Guardo con Exito!
+                                {
+                                    //Vamos a Ligar la Salida de Mercancia a la Requisa
+                                    string DocEntry = oCmp.GetNewObjectKey();//Numero header sap
+                                    string docType = oCmp.GetNewObjectType();
+                                    int iDocEntryHeaderSAP = dp.ValidateNumberInt32(DocEntry);
+                                    ConfirmarRequisa(idRequisa, DocEntry, conn);
+
+                                    SetErrorGrid("Salida de Mercancias Exitosa! DocEntry: " + iDocEntryHeaderSAP.ToString() + " ", "Notificación");
+                                    Marshal.ReleaseComObject(EntryH);
+                                    EntryH = null;
+                                }
+                                else
+                                {
+                                    oCmp.GetLastError(out errNum, out errMesg);
+                                    SetErrorGrid("TimerGeneralSubirRequisasSAP: " + errMesg, "Error");
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                EstadoConexionActual = StatusConexionSAP.Desconectado;
+                                //CajaDialogo.Error(ec.Message);
+                                SetErrorGrid("TimerGeneralSubirRequisasSAP: " + ex.Message, "");
+                            }
+                        }//FIn de Ciclo
+
+                        //try
+                        //{
+                        //    EstadoConexionActual = StatusConexionSAP.Desconectado;
+                        //    oCmp.Disconnect();
+                        //}
+                        //catch
+                        //{
+                        //}
+                    }
+                }
+
+                
             }
             catch (Exception ex)
             {
@@ -849,7 +877,7 @@ namespace App_Set_mail
             
         }
 
-        private List<int> ObtenerRequisasListasParaProcesar()
+        private List<int> ObtenerRequisasListasParaProcesar(DateTime FechaCorteInventario)
         {
             List<int> list = new List<int>();
 
@@ -858,8 +886,8 @@ namespace App_Set_mail
                 conn.Open();
 
                 string query = @"sp_service_alosy_sap_get_requisas";
-
                 SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@FechaCorteInventario", FechaCorteInventario);
                 cmd.CommandType = CommandType.StoredProcedure;
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -891,11 +919,13 @@ namespace App_Set_mail
                
                 ProcesarOrdenesDeCompraToSAP(oCmp, "SubirOrdenesCompra");
 
-                ProcesarRequisasPendientes(oCmp, "RequisasMP");
+                ProcesarRequisasMateriaPrima(oCmp, "RequisasMP");
 
-                ProcesarRquisasMaterialEmpaque(oCmp, "RequisasME");
+                //ProcesarRquisasMaterialEmpaque(oCmp, "RequisasME");
 
                 //ProcesarRecuentoInventario(oCmp, "RecuentoInventario");
+
+                //ProcesarAjustesMaterialEmpaque(oCmp, "AjustesMaterialEmpaque");
 
                 EstadoConexionActual = StatusConexionSAP.Desconectado;
 
@@ -913,6 +943,11 @@ namespace App_Set_mail
             }
         }
 
+        private void ProcesarAjustesMaterialEmpaque(Company oCmp, string v)
+        {
+            throw new NotImplementedException();
+        }
+
         private void ProcesarRecuentoInventario(Company oCmp, string v)
         {
             throw new NotImplementedException();
@@ -926,120 +961,141 @@ namespace App_Set_mail
         {
             DataOperations dp = new DataOperations();
 
-            using (SqlConnection con = new SqlConnection(dp.ConnectionStringAMS))
+            bool HayBloqueo = true;
+            DateTime FechaCorteInventario;
+            using (SqlConnection conn = new SqlConnection(dp.ConnectionStringALOSY))
             {
-                con.Open();
-
-                var requisiciones = ObtenerRequisasMaterialEmpaqueParaProcesar(con);
-                if (requisiciones.Count == 0)
-                    return;
-
-                foreach (var idRequisa in requisiciones)
+                using (SqlCommand cmd = new SqlCommand("sp_sap_service_validacion_recuento_activo", conn))
                 {
-                    SAPbobsCOM.Documents EntryH = null;
-
-                    try
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-
-                        List<InfoRequisaDetalleME> listMaterialEmpaque = new List<InfoRequisaDetalleME>();
-                        string RequisaNumero = string.Empty;
-
-                        DateTime FechaPosteo = DateTime.MinValue;
-
-
-                        using (SqlCommand cmd = new SqlCommand("spServiceRequisasMeHeader", con))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("@idRequisa", Convert.ToInt32(idRequisa));
-                            SqlDataReader reader = cmd.ExecuteReader();
-                            if (reader.Read())
-                            {
-                                RequisaNumero = reader.GetString(0);
-                                FechaPosteo = reader.GetDateTime(1);
-                            }
-                            reader.Close();
-                        }
-
-                        using (SqlCommand cmd = new SqlCommand("spServiceGetDetalleRequisaMeById", con))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
-                            SqlDataReader dr = cmd.ExecuteReader();
-                            while (dr.Read())
-                            {
-                                InfoRequisaDetalleME detalleRequisa = new InfoRequisaDetalleME();
-                                detalleRequisa.idMe = Convert.ToInt32(dr.GetInt32(0));
-                                detalleRequisa.itemCode = dr.GetString(1);
-                                detalleRequisa.itemName = dr.GetString(2);
-                                detalleRequisa.cantidad = dr.GetDecimal(3);
-                                detalleRequisa.bodega = dr.GetString(4);
-                                detalleRequisa.accountCode = dr.GetString(5);
-                                listMaterialEmpaque.Add(detalleRequisa);
-                            }
-                            dr.Close();
-
-                            // ---------------- SAP ----------------
-                            EntryH = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryGenExit);
-                            EstadoConexionActual = StatusConexionSAP.Conectado;
-                            DateTime HoyDate = dp.Now();
-                            EntryH.DocDate = FechaPosteo == DateTime.MinValue ? DateTime.Today : FechaPosteo;
-                            EntryH.TaxDate = HoyDate;
-
-                            EntryH.Comments = "Generado desde Interfaz automática AMS basado en Requisa: " + RequisaNumero;
-
-                            int i = 0;
-                            foreach (var row in listMaterialEmpaque)
-                            {
-                                if (i > 0)
-                                    EntryH.Lines.Add();
-                                EntryH.Lines.ItemCode = row.itemCode;
-                                EntryH.Lines.AccountCode = row.accountCode;
-                                EntryH.Lines.WarehouseCode = row.bodega;
-                                EntryH.Lines.Quantity = Convert.ToDouble(row.cantidad);
-
-                                i++;
-                            }
-
-                            string errMesg = "";
-                            int errNum = 0;
-
-                            errNum = EntryH.Add();//Guardar Header
-
-                            if (errNum == 0)//Guardado con Exito!
-                            {
-                                //Vamos a Ligar la Salida de mercancia a la Requisa
-                                string DocEntry = oCmp.GetNewObjectKey();
-
-                                int iDocEntryHeader = dp.ValidateNumberInt32(DocEntry);
-
-                                ConfirmarRequisaME(idRequisa, DocEntry, con);
-
-                                SetErrorGrid("Salida de Mercancia ME Exitosa! DocEntry: " + iDocEntryHeader.ToString() + "", "Notificación");
-
-                            }
-                            else
-                            {
-                                oCmp.GetLastError(out errNum, out errMesg);
-                                SetErrorGrid("Func. Salida Mercancia ME (IdReq: " + idRequisa + "): " + errMesg, " Error");
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        SetErrorGrid("Excepcion requisiciones ME " + idRequisa + ":" + ex.Message, "Error");
-                    }
-                    finally 
-                    {
-                        if (EntryH != null) 
-                        {
-                            Marshal.ReleaseComObject(EntryH);
-                            EntryH = null;
-                        }
+                        HayBloqueo = Convert.ToBoolean(dr.GetBoolean(0));
+                        FechaCorteInventario = dr.GetDateTime(1);
+                        dr.Close();
                     }
                 }
             }
 
-            
+            if (!HayBloqueo)
+            {
+                using (SqlConnection con = new SqlConnection(dp.ConnectionStringAMS))
+                {
+                    con.Open();
+
+                    var requisiciones = ObtenerRequisasMaterialEmpaqueParaProcesar(con);
+                    if (requisiciones.Count == 0)
+                        return;
+
+                    foreach (var idRequisa in requisiciones)
+                    {
+                        SAPbobsCOM.Documents EntryH = null;
+
+                        try
+                        {
+
+                            List<InfoRequisaDetalleME> listMaterialEmpaque = new List<InfoRequisaDetalleME>();
+                            string RequisaNumero = string.Empty;
+
+                            DateTime FechaPosteo = DateTime.MinValue;
+
+
+                            using (SqlCommand cmd = new SqlCommand("spServiceRequisasMeHeader", con))
+                            {
+                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@idRequisa", Convert.ToInt32(idRequisa));
+                                SqlDataReader reader = cmd.ExecuteReader();
+                                if (reader.Read())
+                                {
+                                    RequisaNumero = reader.GetString(0);
+                                    FechaPosteo = reader.GetDateTime(1);
+                                }
+                                reader.Close();
+                            }
+
+                            using (SqlCommand cmd = new SqlCommand("spServiceGetDetalleRequisaMeById", con))
+                            {
+                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
+                                SqlDataReader dr = cmd.ExecuteReader();
+                                while (dr.Read())
+                                {
+                                    InfoRequisaDetalleME detalleRequisa = new InfoRequisaDetalleME();
+                                    detalleRequisa.idMe = Convert.ToInt32(dr.GetInt32(0));
+                                    detalleRequisa.itemCode = dr.GetString(1);
+                                    detalleRequisa.itemName = dr.GetString(2);
+                                    detalleRequisa.cantidad = dr.GetDecimal(3);
+                                    detalleRequisa.bodega = dr.GetString(4);
+                                    detalleRequisa.accountCode = dr.GetString(5);
+                                    listMaterialEmpaque.Add(detalleRequisa);
+                                }
+                                dr.Close();
+
+                                // ---------------- SAP ----------------
+                                EntryH = oCmp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oInventoryGenExit);
+                                EstadoConexionActual = StatusConexionSAP.Conectado;
+                                DateTime HoyDate = dp.Now();
+                                EntryH.DocDate = FechaPosteo == DateTime.MinValue ? DateTime.Today : FechaPosteo;
+                                EntryH.TaxDate = HoyDate;
+
+                                EntryH.Comments = "Generado desde Interfaz automática AMS basado en Requisa: " + RequisaNumero;
+
+                                int i = 0;
+                                foreach (var row in listMaterialEmpaque)
+                                {
+                                    if (i > 0)
+                                        EntryH.Lines.Add();
+                                    EntryH.Lines.ItemCode = row.itemCode;
+                                    EntryH.Lines.AccountCode = row.accountCode;
+                                    EntryH.Lines.WarehouseCode = row.bodega;
+                                    EntryH.Lines.Quantity = Convert.ToDouble(row.cantidad);
+
+                                    i++;
+                                }
+
+                                string errMesg = "";
+                                int errNum = 0;
+
+                                errNum = EntryH.Add();//Guardar Header
+
+                                if (errNum == 0)//Guardado con Exito!
+                                {
+                                    //Vamos a Ligar la Salida de mercancia a la Requisa
+                                    string DocEntry = oCmp.GetNewObjectKey();
+
+                                    int iDocEntryHeader = dp.ValidateNumberInt32(DocEntry);
+
+                                    ConfirmarRequisaME(idRequisa, DocEntry, con);
+
+                                    SetErrorGrid("Salida de Mercancia ME Exitosa! DocEntry: " + iDocEntryHeader.ToString() + "", "Notificación");
+
+                                }
+                                else
+                                {
+                                    oCmp.GetLastError(out errNum, out errMesg);
+                                    SetErrorGrid("Func. Salida Mercancia ME (IdReq: " + idRequisa + "): " + errMesg, " Error");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SetErrorGrid("Excepcion requisiciones ME " + idRequisa + ":" + ex.Message, "Error");
+                        }
+                        finally
+                        {
+                            if (EntryH != null)
+                            {
+                                Marshal.ReleaseComObject(EntryH);
+                                EntryH = null;
+                            }
+                        }
+                    }
+                }
+
+            }
+
+
+
         }
 
         private void ConfirmarRequisaME(int idRequisa, string docEntry, SqlConnection con)
