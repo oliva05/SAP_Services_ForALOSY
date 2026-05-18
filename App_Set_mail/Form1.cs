@@ -921,7 +921,7 @@ namespace App_Set_mail
 
                 ProcesarRequisasMateriaPrima(oCmp, "RequisasMP");
 
-                //ProcesarRquisasMaterialEmpaque(oCmp, "RequisasME");
+                ProcesarRquisasMaterialEmpaque(oCmp, "RequisasME");
 
                 //ProcesarRecuentoInventario(oCmp, "RecuentoInventario");
 
@@ -983,7 +983,7 @@ namespace App_Set_mail
                 {
                     con.Open();
 
-                    var requisiciones = ObtenerRequisasMaterialEmpaqueParaProcesar(con);
+                    var requisiciones = ObtenerRequisasMaterialEmpaqueParaProcesar(con,FechaCorteInventario);
                     if (requisiciones.Count == 0)
                         return;
 
@@ -1004,6 +1004,7 @@ namespace App_Set_mail
                             {
                                 cmd.CommandType = CommandType.StoredProcedure;
                                 cmd.Parameters.AddWithValue("@idRequisa", Convert.ToInt32(idRequisa));
+                                cmd.Parameters.AddWithValue("@FechaCorteInventario", FechaCorteInventario);
                                 SqlDataReader reader = cmd.ExecuteReader();
                                 if (reader.Read())
                                 {
@@ -1017,6 +1018,7 @@ namespace App_Set_mail
                             {
                                 cmd.CommandType = CommandType.StoredProcedure;
                                 cmd.Parameters.AddWithValue("@IdRequisa", Convert.ToInt32(idRequisa));
+                                cmd.Parameters.AddWithValue("@FechaCorteInventario", FechaCorteInventario);
                                 SqlDataReader dr = cmd.ExecuteReader();
                                 while (dr.Read())
                                 {
@@ -1119,7 +1121,7 @@ namespace App_Set_mail
             public string accountCode;
         }
 
-        private List<int> ObtenerRequisasMaterialEmpaqueParaProcesar(SqlConnection connection)
+        private List<int> ObtenerRequisasMaterialEmpaqueParaProcesar(SqlConnection connection, DateTime FechaCorteInventario)
         {
             List<int> list = new List<int>();
 
@@ -1131,6 +1133,7 @@ namespace App_Set_mail
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@FechaCorteInventario", FechaCorteInventario);
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
